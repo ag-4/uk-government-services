@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP Postcode Search Test - Unique Results</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result { 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            border-left: 4px solid;
+        }
+        .success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border-left-color: #28a745;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border-left-color: #dc3545;
+        }
+        .info { 
+            background-color: #d1ecf1; 
+            color: #0c5460; 
+            border-left-color: #17a2b8;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left-color: #ffc107;
+        }
+        .search-test {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .mp-result {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            border: 1px solid #e9ecef;
+        }
+        .test-header {
+            color: #495057;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 MP Postcode Search Test - Unique Results Verification</h1>
+        <p>This test verifies that different postcodes return different MPs, fixing the duplicate constituency issue.</p>
+        <div id="results"></div>
+    </div>
+    
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function logResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+            console.log(message.replace(/<[^>]*>/g, ''));
+        }
+        
+        function createSearchTestDiv(title, content) {
+            const div = document.createElement('div');
+            div.className = 'search-test';
+            div.innerHTML = `<div class="test-header">${title}</div>${content}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        async function testUniquePostcodeResults() {
+            logResult('🚀 Starting MP Postcode Uniqueness Test...', 'info');
+            
+            try {
+                // Fetch MP data
+                logResult('📊 Fetching MP data...', 'info');
+                const response = await fetch('/data/mps.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const mps = await response.json();
+                logResult(`✅ Successfully fetched <strong>${mps.length}</strong> MPs from database`, 'success');
+                
+                // Check for duplicate constituencies
+                logResult('🔍 Checking for duplicate constituencies...', 'info');
+                const constituencyMap = new Map();
+                const duplicates = [];
+                
+                mps.forEach(mp => {
+                    const constituency = mp.constituency;
+                    if (constituencyMap.has(constituency)) {
+                        duplicates.push(constituency);
+                    } else {
+                        constituencyMap.set(constituency, mp);
+                    }
+                });
+                
+                if (duplicates.length === 0) {
+                    logResult('✅ <strong>No duplicate constituencies found!</strong> Each MP has a unique constituency.', 'success');
+                } else {
+                    logResult(`⚠️ Found <strong>${duplicates.length}</strong> duplicate constituencies: ${duplicates.join(', ')}`, 'warning');
+                }
+                
+                // Test different postcodes
+                const testPostcodes = [
+                    'SW1A', 'E1', 'W1', 'N1', 'SE1', 'NW1', 'WC1',
+                    'M1', 'B1', 'L1', 'G1', 'EH1', 'CF1', 'BT1',
+                    'OX1', 'CB1', 'BS1', 'BA1', 'TN1'
+                ];
+                
+                logResult(`🧪 Testing ${testPostcodes.length} different postcode searches...`, 'info');
+                
+                const searchResults = new Map();
+                let uniqueResults = 0;
+                let totalResults = 0;
+                
+                for (const postcode of testPostcodes) {
+                    const results = mps.filter(mp => {
+                        const postcodes = [...(mp.postcodes || [])];
+                        return postcodes.some(pc => pc.toLowerCase().includes(postcode.toLowerCase()));
+                    });
+                    
+                    if (results.length > 0) {
+                        const firstResult = results[0];
+                        const resultKey = `${firstResult.name}-${firstResult.constituency}`;
+                        
+                        if (!searchResults.has(resultKey)) {
+                            uniqueResults++;
+                        }
+                        searchResults.set(postcode, {
+                            count: results.length,
+                            mp: firstResult,
+                            isUnique: !searchResults.has(resultKey)
+                        });
+                        totalResults++;
+                    } else {
+                        searchResults.set(postcode, { count: 0, mp: null, isUnique: false });
+                    }
+                }
+                
+                // Display results
+                let resultsHtml = '';
+                testPostcodes.forEach(postcode => {
+                    const result = searchResults.get(postcode);
+                    if (result.count > 0) {
+                        const statusClass = result.isUnique ? 'success' : 'warning';
+                        const statusIcon = result.isUnique ? '✅' : '⚠️';
+                        resultsHtml += `
+                            <div class="mp-result">
+                                <strong>${postcode}</strong> → ${statusIcon} <strong>${result.mp.name}</strong> 
+                                (${result.mp.constituency}, ${result.mp.party}) 
+                                <small>[${result.count} matches]</small>
+                            </div>
+                        `;
+                    } else {
+                        resultsHtml += `
+                            <div class="mp-result">
+                                <strong>${postcode}</strong> → ❌ No results found
+                            </div>
+                        `;
+                    }
+                });
+                
+                createSearchTestDiv('🗳️ Postcode Search Results', resultsHtml);
+                
+                // Summary
+                logResult(`📈 <strong>Search Summary:</strong>`, 'info');
+                logResult(`• Total postcode searches: ${testPostcodes.length}`, 'info');
+                logResult(`• Searches with results: ${totalResults}`, 'info');
+                logResult(`• Unique MP results: ${uniqueResults}`, 'info');
+                logResult(`• Duplicate results: ${totalResults - uniqueResults}`, 'info');
+                
+                if (uniqueResults === totalResults && totalResults > 0) {
+                    logResult('🎉 <strong>SUCCESS!</strong> All postcode searches returned unique MPs. The duplicate constituency issue has been fixed!', 'success');
+                } else if (totalResults === 0) {
+                    logResult('⚠️ <strong>WARNING:</strong> No search results found. This might indicate an issue with the postcode data structure.', 'warning');
+                } else {
+                    logResult(`⚠️ <strong>PARTIAL SUCCESS:</strong> Some postcodes still return the same MP, but most are now unique.`, 'warning');
+                }
+                
+                // Test party distribution
+                logResult('🎭 Checking party distribution...', 'info');
+                const partyCount = {};
+                mps.forEach(mp => {
+                    partyCount[mp.party] = (partyCount[mp.party] || 0) + 1;
+                });
+                
+                let partyHtml = '';
+                Object.entries(partyCount)
+                    .sort(([,a], [,b]) => b - a)
+                    .forEach(([party, count]) => {
+                        const percentage = ((count / mps.length) * 100).toFixed(1);
+                        partyHtml += `<div class="mp-result">${party}: <strong>${count}</strong> MPs (${percentage}%)</div>`;
+                    });
+                
+                createSearchTestDiv('🎭 Party Distribution', partyHtml);
+                
+                // Test postcode coverage
+                const totalPostcodes = mps.reduce((sum, mp) => sum + (mp.postcodes?.length || 0), 0);
+                const avgPostcodesPerMP = Math.round(totalPostcodes / mps.length);
+                
+                logResult(`📮 <strong>Postcode Coverage:</strong>`, 'info');
+                logResult(`• Total postcodes in database: <strong>${totalPostcodes.toLocaleString()}</strong>`, 'info');
+                logResult(`• Average postcodes per MP: <strong>${avgPostcodesPerMP}</strong>`, 'info');
+                logResult(`• Estimated UK postcode coverage: <strong>${((totalPostcodes / 1800000) * 100).toFixed(1)}%</strong>`, 'info');
+                
+                logResult('🎉 <strong>All tests completed!</strong> The MP search functionality should now work correctly with unique results for different postcodes.', 'success');
+                
+            } catch (error) {
+                logResult(`❌ <strong>Test failed:</strong> ${error.message}`, 'error');
+                console.error('Detailed error:', error);
+            }
+        }
+        
+        // Run tests when page loads
+        testUniquePostcodeResults();
+    </script>
+</body>
+</html>

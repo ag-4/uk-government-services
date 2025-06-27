@@ -1,0 +1,17 @@
+# Final GitHub Push Commands
+# Copy and paste these commands one by one in your terminal
+
+# First, make sure you're in the right directory
+cd "c:\Users\owl47\Desktop\uk-gov-services"
+
+# Add your GitHub repository as the remote origin
+# REPLACE 'YOUR_USERNAME' with your actual GitHub username
+git remote add origin https://github.com/YOUR_USERNAME/uk-gov-services.git
+
+# Rename the main branch to 'main' (GitHub standard)
+git branch -M main
+
+# Push your code to GitHub
+git push -u origin main
+
+# You're done! Your project is now on GitHub! 🎉

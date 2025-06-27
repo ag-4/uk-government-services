@@ -1,0 +1,149 @@
+#root {
+  margin: 0 auto;
+}
+
+/* UK Government Custom Styles */
+.uk-gov-header {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 100%);
+  color: hsl(var(--primary-foreground));
+  border-bottom: 3px solid hsl(var(--accent));
+}
+
+.uk-gov-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(229 231 235);
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.uk-gov-button {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transition: background-color 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+
+.uk-gov-button:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+
+.uk-gov-accent {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  transition: background-color 0.2s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uk-gov-accent:hover {
+  background-color: hsl(var(--accent) / 0.9);
+}
+
+/* Political Party Colors */
+.party-conservative {
+  background-color: rgb(219 234 254);
+  color: rgb(30 64 175);
+  border-color: rgb(147 197 253);
+}
+
+.party-labour {
+  background-color: rgb(254 226 226);
+  color: rgb(153 27 27);
+  border-color: rgb(252 165 165);
+}
+
+.party-snp {
+  background-color: rgb(254 249 195);
+  color: rgb(133 77 14);
+  border-color: rgb(253 230 138);
+}
+
+.party-green {
+  background-color: rgb(220 252 231);
+  color: rgb(21 128 61);
+  border-color: rgb(134 239 172);
+}
+
+.party-libdem {
+  background-color: rgb(255 237 213);
+  color: rgb(154 52 18);
+  border-color: rgb(251 191 36);
+}
+
+/* News Category Colors */
+.news-category-parliament {
+  background-color: rgb(219 234 254);
+  color: rgb(30 64 175);
+  border-color: rgb(147 197 253);
+}
+
+.news-category-new-laws {
+  background-color: rgb(220 252 231);
+  color: rgb(21 128 61);
+  border-color: rgb(134 239 172);
+}
+
+.news-category-proposed-laws {
+  background-color: rgb(254 249 195);
+  color: rgb(133 77 14);
+  border-color: rgb(253 230 138);
+}
+
+.news-category-general-politics {
+  background-color: rgb(243 232 255);
+  color: rgb(107 33 168);
+  border-color: rgb(196 181 253);
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}

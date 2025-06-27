@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP Search Integration Test</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; text-align: center; }
+        .test-status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            border-left: 4px solid;
+        }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .info { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 4px; 
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .test-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 MP Search Integration Test</h1>
+        <div id="results"></div>
+        <div id="console-output">
+            <h3>Console Output:</h3>
+            <pre id="console-log"></pre>
+        </div>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        const consoleLog = document.getElementById('console-log');
+        
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function appendToConsole(message, type = 'log') {
+            consoleLog.textContent += `[${type.toUpperCase()}] ${message}\n`;
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            appendToConsole(args.join(' '), 'log');
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            appendToConsole(args.join(' '), 'error');
+        };
+        
+        console.warn = (...args) => {
+            originalWarn(...args);
+            appendToConsole(args.join(' '), 'warn');
+        };
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        async function runMPSearchTests() {
+            addResult('🚀 Starting MP Search Integration Tests...', 'info');
+            
+            try {
+                // Test 1: Data Fetch
+                addResult('📊 Test 1: Fetching MP data...', 'info');
+                const response = await fetch('/data/mps.json');
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch MP data: ${response.status}`);
+                }
+                
+                const mps = await response.json();
+                addResult(`✅ Successfully fetched <strong>${mps.length} MPs</strong>`, 'success');
+                
+                // Test 2: Search Functionality
+                addResult('🔍 Test 2: Testing search algorithms...', 'info');
+                
+                const testCases = [
+                    { query: 'Abbott', expectedMinResults: 1, description: 'Name search' },
+                    { query: 'Conservative', expectedMinResults: 10, description: 'Party search' },
+                    { query: 'Westminster', expectedMinResults: 0, description: 'Constituency search' },
+                    { query: 'WC1', expectedMinResults: 1, description: 'Postcode search' },
+                    { query: 'Labour', expectedMinResults: 50, description: 'Major party search' }
+                ];
+                
+                let passedTests = 0;
+                
+                for (const testCase of testCases) {
+                    const results = mps.filter(mp => {
+                        const query = testCase.query.toLowerCase().trim();
+                        const searchFields = [
+                            mp.name,
+                            mp.displayName,
+                            mp.constituency,
+                            mp.party,
+                            mp.postcode || '',
+                            ...(mp.postcodes || []),
+                            ...(mp.fullPostcodes || []),
+                            ...(mp.constituencyPostcodes || [])
+                        ];
+                        
+                        return searchFields.some(field => 
+                            field && field.toLowerCase().includes(query)
+                        );
+                    });
+                    
+                    const passed = results.length >= testCase.expectedMinResults;
+                    if (passed) passedTests++;
+                    
+                    const statusType = passed ? 'success' : 'warning';
+                    const icon = passed ? '✅' : '⚠️';
+                    
+                    addResult(
+                        `${icon} <strong>${testCase.description}</strong>: "${testCase.query}" → ${results.length} results (expected ≥${testCase.expectedMinResults})` +
+                        (results.length > 0 ? `<br>   📝 Sample: ${results[0].displayName} (${results[0].constituency})` : ''),
+                        statusType
+                    );
+                }
+                
+                // Test 3: Data Structure Validation
+                addResult('🏗️ Test 3: Validating data structure...', 'info');
+                
+                const sampleMP = mps[0];
+                const requiredFields = ['id', 'name', 'displayName', 'constituency', 'party'];
+                const missingFields = requiredFields.filter(field => !sampleMP[field]);
+                
+                if (missingFields.length === 0) {
+                    addResult('✅ All required fields present in MP data', 'success');
+                } else {
+                    addResult(`❌ Missing required fields: ${missingFields.join(', ')}`, 'error');
+                }
+                
+                // Test 4: Party Statistics
+                addResult('📈 Test 4: Analyzing party distribution...', 'info');
+                
+                const partyStats = {};
+                mps.forEach(mp => {
+                    partyStats[mp.party] = (partyStats[mp.party] || 0) + 1;
+                });
+                
+                const topParties = Object.entries(partyStats)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 5);
+                
+                let partyStatsHtml = '<strong>Top 5 Parties:</strong><br>';
+                topParties.forEach(([party, count]) => {
+                    partyStatsHtml += `   • ${party}: ${count} MPs<br>`;
+                });
+                
+                addResult(partyStatsHtml, 'info');
+                
+                // Test Summary
+                const totalTests = testCases.length + 2; // search tests + data structure + party stats
+                const successRate = Math.round((passedTests / testCases.length) * 100);
+                
+                addResult(
+                    `<div class="test-summary">
+                        <h3>🎯 Test Summary</h3>
+                        <p><strong>${passedTests}/${testCases.length}</strong> search tests passed</p>
+                        <p>Success Rate: <strong>${successRate}%</strong></p>
+                        <p>Total MPs: <strong>${mps.length}</strong></p>
+                        <p>Total Parties: <strong>${Object.keys(partyStats).length}</strong></p>
+                    </div>`,
+                    'info'
+                );
+                
+                if (successRate >= 80) {
+                    addResult('🎉 <strong>MP Search System is working correctly!</strong>', 'success');
+                } else {
+                    addResult('⚠️ <strong>MP Search System needs attention</strong>', 'warning');
+                }
+                
+            } catch (error) {
+                addResult(`❌ <strong>Test Suite Failed:</strong> ${error.message}`, 'error');
+                console.error('Detailed error:', error);
+            }
+        }
+        
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', runMPSearchTests);
+    </script>
+</body>
+</html>

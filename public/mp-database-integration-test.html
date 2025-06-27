@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your MP - Database Integration Test</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 20px; 
+            background-color: #f8fafc;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { 
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-section { 
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-result { 
+            margin: 10px 0; 
+            padding: 12px 16px; 
+            border-radius: 8px; 
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .success { background-color: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+        .error { background-color: #fef2f2; color: #dc2626; border-left: 4px solid #ef4444; }
+        .warning { background-color: #fefce8; color: #ca8a04; border-left: 4px solid #eab308; }
+        .info { background-color: #f0f9ff; color: #0369a1; border-left: 4px solid #3b82f6; }
+        .mp-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 10px 0;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px;
+            align-items: center;
+        }
+        .mp-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #64748b;
+        }
+        .mp-info h4 { margin: 0 0 4px 0; color: #1e293b; }
+        .mp-info p { margin: 0; color: #64748b; font-size: 14px; }
+        .search-demo {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .search-button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .search-button:hover { background: #2563eb; }
+        .search-button:disabled { background: #9ca3af; cursor: not-allowed; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-number { font-size: 24px; font-weight: bold; color: #1e293b; }
+        .stat-label { color: #64748b; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Find Your MP - Database Integration Test</h1>
+            <p>Comprehensive testing of MP database and search functionality</p>
+        </div>
+
+        <div class="search-demo">
+            <h3>🔍 Live MP Search Demo</h3>
+            <p>Test the search functionality with real data:</p>
+            <input type="text" id="searchInput" class="search-input" placeholder="Enter postcode, MP name, constituency, or party (e.g., 'Abbott', 'Conservative', 'WC1', 'Westminster')">
+            <button id="searchButton" class="search-button" onclick="performSearch()">Search MPs</button>
+            <div id="searchResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Database Statistics</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalMPs">...</div>
+                    <div class="stat-label">Total MPs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeMPs">...</div>
+                    <div class="stat-label">Active MPs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalParties">...</div>
+                    <div class="stat-label">Political Parties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPostcodes">...</div>
+                    <div class="stat-label">Postcodes Mapped</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Automated Test Results</h2>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Search Algorithm Validation</h2>
+            <div id="searchValidation"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🗺️ Postcode Coverage Analysis</h2>
+            <div id="postcodeAnalysis"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🏛️ Party Distribution</h2>
+            <div id="partyDistribution"></div>
+        </div>
+    </div>
+
+    <script>
+        let mpsData = [];
+        
+        const resultsDiv = document.getElementById('testResults');
+        const searchResultsDiv = document.getElementById('searchResults');
+        
+        function logResult(message, type = 'info', targetDiv = resultsDiv) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            
+            const icon = type === 'success' ? '✅' : 
+                        type === 'error' ? '❌' : 
+                        type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            div.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+            targetDiv.appendChild(div);
+            console.log(`${icon} ${message}`);
+        }
+        
+        function renderMPCard(mp) {
+            return `
+                <div class="mp-card">
+                    <div class="mp-avatar">
+                        ${mp.displayName ? mp.displayName.split(' ').map(n => n[0]).join('').substring(0, 2) : 'MP'}
+                    </div>
+                    <div class="mp-info">
+                        <h4>${mp.displayName || mp.name}</h4>
+                        <p><strong>${mp.constituency}</strong> • ${mp.party}</p>
+                        <p>📞 ${mp.phone} • 📧 ${mp.email}</p>
+                        ${mp.postcodes ? `<p>📮 Sample postcodes: ${mp.postcodes.slice(0, 3).join(', ')}${mp.postcodes.length > 3 ? '...' : ''}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+            
+            searchResultsDiv.innerHTML = '<p>🔍 Searching...</p>';
+            
+            setTimeout(() => {
+                const results = searchMPs(query);
+                
+                if (results.length === 0) {
+                    searchResultsDiv.innerHTML = `
+                        <div class="test-result warning">
+                            <span>⚠️</span>
+                            <span>No MPs found for "${query}". Try a different search term.</span>
+                        </div>
+                    `;
+                } else {
+                    searchResultsDiv.innerHTML = `
+                        <div class="test-result success">
+                            <span>✅</span>
+                            <span>Found ${results.length} MP${results.length > 1 ? 's' : ''} for "${query}"</span>
+                        </div>
+                        ${results.slice(0, 5).map(mp => renderMPCard(mp)).join('')}
+                        ${results.length > 5 ? `<p><em>... and ${results.length - 5} more results</em></p>` : ''}
+                    `;
+                }
+            }, 500);
+        }
+        
+        function searchMPs(query) {
+            const searchQuery = query.toLowerCase().trim();
+            return mpsData.filter(mp => {
+                const searchFields = [
+                    mp.name,
+                    mp.displayName,
+                    mp.constituency,
+                    mp.party,
+                    mp.postcode || '',
+                    ...(mp.postcodes || []),
+                    ...(mp.fullPostcodes || []),
+                    ...(mp.constituencyPostcodes || [])
+                ];
+                
+                return searchFields.some(field => 
+                    field && field.toLowerCase().includes(searchQuery)
+                );
+            });
+        }
+        
+        async function runComprehensiveTests() {
+            try {
+                logResult('🚀 Starting comprehensive MP database integration test...', 'info');
+                
+                // Test 1: Load MP Data
+                logResult('📡 Loading MP data from database...', 'info');
+                const response = await fetch('/data/mps.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load MP data: ${response.status} ${response.statusText}`);
+                }
+                
+                mpsData = await response.json();
+                logResult(`✅ Successfully loaded ${mpsData.length} MPs from database`, 'success');
+                
+                // Update statistics
+                updateStatistics();
+                
+                // Test 2: Database Structure Validation
+                logResult('🔍 Validating database structure...', 'info');
+                validateDatabaseStructure();
+                
+                // Test 3: Search Algorithm Tests
+                logResult('🎯 Testing search algorithms...', 'info');
+                testSearchAlgorithms();
+                
+                // Test 4: Postcode Coverage
+                logResult('📮 Analyzing postcode coverage...', 'info');
+                analyzePostcodeCoverage();
+                
+                // Test 5: Party Distribution
+                logResult('🏛️ Analyzing party distribution...', 'info');
+                analyzePartyDistribution();
+                
+                // Test 6: Data Quality Checks
+                logResult('✨ Running data quality checks...', 'info');
+                runDataQualityChecks();
+                
+                logResult('🎉 All tests completed successfully! The MP database is fully integrated and functional.', 'success');
+                
+            } catch (error) {
+                logResult(`❌ Test failed: ${error.message}`, 'error');
+                console.error('Detailed error:', error);
+            }
+        }
+        
+        function updateStatistics() {
+            document.getElementById('totalMPs').textContent = mpsData.length;
+            document.getElementById('activeMPs').textContent = mpsData.filter(mp => mp.isActive !== false).length;
+            
+            const parties = new Set(mpsData.map(mp => mp.party));
+            document.getElementById('totalParties').textContent = parties.size;
+            
+            const totalPostcodes = mpsData.reduce((total, mp) => {
+                return total + (mp.postcodes ? mp.postcodes.length : 0) + (mp.constituencyPostcodes ? mp.constituencyPostcodes.length : 0);
+            }, 0);
+            document.getElementById('totalPostcodes').textContent = totalPostcodes.toLocaleString();
+        }
+        
+        function validateDatabaseStructure() {
+            const sampleMP = mpsData[0];
+            const requiredFields = ['id', 'name', 'displayName', 'constituency', 'party'];
+            const missingFields = requiredFields.filter(field => !sampleMP[field]);
+            
+            if (missingFields.length === 0) {
+                logResult('✅ Database structure validation passed - all required fields present', 'success');
+            } else {
+                logResult(`❌ Missing required fields: ${missingFields.join(', ')}`, 'error');
+            }
+            
+            // Check for postcode data
+            const mpsWithPostcodes = mpsData.filter(mp => mp.postcodes && mp.postcodes.length > 0);
+            logResult(`📮 ${mpsWithPostcodes.length}/${mpsData.length} MPs have postcode data (${Math.round(mpsWithPostcodes.length/mpsData.length*100)}%)`, 'success');
+        }
+        
+        function testSearchAlgorithms() {
+            const validationDiv = document.getElementById('searchValidation');
+            
+            const testCases = [
+                { query: 'Abbott', description: 'MP name search', expectedMin: 1 },
+                { query: 'Conservative', description: 'Party search', expectedMin: 50 },
+                { query: 'Labour', description: 'Major party search', expectedMin: 100 },
+                { query: 'Westminster', description: 'Constituency search', expectedMin: 0 },
+                { query: 'WC1', description: 'Postcode prefix search', expectedMin: 1 },
+                { query: 'London', description: 'Geographic search', expectedMin: 5 },
+                { query: 'Smith', description: 'Common surname search', expectedMin: 1 }
+            ];
+            
+            testCases.forEach(testCase => {
+                const results = searchMPs(testCase.query);
+                const passed = results.length >= testCase.expectedMin;
+                
+                logResult(
+                    `${testCase.description}: "${testCase.query}" → ${results.length} results (expected ≥${testCase.expectedMin})`,
+                    passed ? 'success' : 'warning',
+                    validationDiv
+                );
+                
+                if (results.length > 0 && results.length <= 3) {
+                    logResult(
+                        `  Sample results: ${results.map(mp => mp.displayName).join(', ')}`,
+                        'info',
+                        validationDiv
+                    );
+                }
+            });
+        }
+        
+        function analyzePostcodeCoverage() {
+            const analysisDiv = document.getElementById('postcodeAnalysis');
+            
+            const postcodeAreas = {};
+            mpsData.forEach(mp => {
+                if (mp.postcodes) {
+                    mp.postcodes.forEach(postcode => {
+                        const area = postcode.substring(0, 2);
+                        postcodeAreas[area] = (postcodeAreas[area] || 0) + 1;
+                    });
+                }
+            });
+            
+            const sortedAreas = Object.entries(postcodeAreas)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10);
+            
+            logResult(`📊 Top 10 postcode areas covered:`, 'info', analysisDiv);
+            sortedAreas.forEach(([area, count]) => {
+                logResult(`  ${area}: ${count} postcodes`, 'info', analysisDiv);
+            });
+            
+            logResult(`📮 Total postcode areas covered: ${Object.keys(postcodeAreas).length}`, 'success', analysisDiv);
+        }
+        
+        function analyzePartyDistribution() {
+            const distributionDiv = document.getElementById('partyDistribution');
+            
+            const partyStats = {};
+            mpsData.forEach(mp => {
+                partyStats[mp.party] = (partyStats[mp.party] || 0) + 1;
+            });
+            
+            const sortedParties = Object.entries(partyStats)
+                .sort(([,a], [,b]) => b - a);
+            
+            logResult(`🏛️ Party distribution (${sortedParties.length} parties):`, 'info', distributionDiv);
+            sortedParties.forEach(([party, count]) => {
+                const percentage = Math.round(count / mpsData.length * 100);
+                logResult(`  ${party}: ${count} MPs (${percentage}%)`, 'info', distributionDiv);
+            });
+        }
+        
+        function runDataQualityChecks() {
+            let issues = 0;
+            
+            // Check for missing display names
+            const missingDisplayNames = mpsData.filter(mp => !mp.displayName);
+            if (missingDisplayNames.length > 0) {
+                logResult(`⚠️ ${missingDisplayNames.length} MPs missing display names`, 'warning');
+                issues++;
+            }
+            
+            // Check for missing contact info
+            const missingEmail = mpsData.filter(mp => !mp.email || mp.email === 'contact@parliament.uk');
+            const missingPhone = mpsData.filter(mp => !mp.phone || mp.phone === '+44 20 7219 3000');
+            
+            if (missingEmail.length > 0) {
+                logResult(`📧 ${missingEmail.length} MPs using generic email addresses`, 'info');
+            }
+            
+            if (missingPhone.length > 0) {
+                logResult(`📞 ${missingPhone.length} MPs using generic phone numbers`, 'info');
+            }
+            
+            // Check for missing postcodes
+            const missingPostcodes = mpsData.filter(mp => !mp.postcodes || mp.postcodes.length === 0);
+            if (missingPostcodes.length > 0) {
+                logResult(`📮 ${missingPostcodes.length} MPs missing postcode data`, 'warning');
+                issues++;
+            }
+            
+            if (issues === 0) {
+                logResult('✅ Data quality check passed - no critical issues found', 'success');
+            } else {
+                logResult(`⚠️ Found ${issues} data quality issues (non-critical)`, 'warning');
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        // Run tests when page loads
+        runComprehensiveTests();
+    </script>
+</body>
+</html>

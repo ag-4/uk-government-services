@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP Database Verification Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .mp-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .mp-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .mp-details {
+            margin: 5px 0;
+            color: #34495e;
+        }
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status.correct {
+            background: #2ecc71;
+            color: white;
+        }
+        .status.error {
+            background: #e74c3c;
+            color: white;
+        }
+        .search-test {
+            margin: 20px 0;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 8px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .search-results {
+            margin-top: 15px;
+        }
+        .result-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        .verification-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .verification-table th,
+        .verification-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .verification-table th {
+            background: #3498db;
+            color: white;
+        }
+        .correct-data {
+            background: #d5edda;
+        }
+        .incorrect-data {
+            background: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏛️ MP Database Verification Test</h1>
+        <p>Testing corrected UK Parliament MP data for accuracy</p>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Database Overview</h2>
+        <div id="database-stats"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Real-time Search Test</h2>
+        <div class="search-test">
+            <input type="text" class="search-input" id="search-input" placeholder="Search by name, constituency, party, or postcode (e.g., 'Abbott', 'Hackney', 'Labour', 'N16')">
+            <div class="search-results" id="search-results"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ Data Verification Results</h2>
+        <div id="verification-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Specific MP Tests</h2>
+        <div id="mp-tests"></div>
+    </div>
+
+    <script>
+        let mpsData = [];
+
+        // Expected correct data for verification
+        const expectedData = {
+            "MP172": {
+                name: "Abbott, Ms Diane",
+                email: "diane.abbott.office@parliament.uk",
+                phone: "020 7219 4426",
+                constituency: "Hackney North and Stoke Newington",
+                postcodes: ["N16", "E8"],
+                website: "http://www.dianeabbott.org.uk"
+            },
+            "MP4514": {
+                name: "Starmer, Sir Keir",
+                email: "keir.starmer.mp@parliament.uk",
+                constituency: "Holborn and St Pancras",
+                postcodes: ["WC1", "WC2"],
+                website: "http://www.keirstarmer.com"
+            }
+        };
+
+        async function loadMPData() {
+            try {
+                const response = await fetch('/data/mps.json');
+                mpsData = await response.json();
+                
+                displayDatabaseStats();
+                displayVerificationResults();
+                displayMPTests();
+                
+                console.log('Loaded MPs:', mpsData.length);
+                
+            } catch (error) {
+                console.error('Error loading MP data:', error);
+                document.getElementById('database-stats').innerHTML = 
+                    '<div class="status error">❌ Failed to load MP data</div>';
+            }
+        }
+
+        function displayDatabaseStats() {
+            const stats = {
+                total: mpsData.length,
+                withEmail: mpsData.filter(mp => mp.email && mp.email !== 'contact@parliament.uk').length,
+                withPhone: mpsData.filter(mp => mp.phone && mp.phone !== '+44 20 7219 3000').length,
+                withWebsite: mpsData.filter(mp => mp.website).length,
+                parties: [...new Set(mpsData.map(mp => mp.party))].length
+            };
+
+            document.getElementById('database-stats').innerHTML = `
+                <table class="verification-table">
+                    <tr><th>Metric</th><th>Count</th><th>Status</th></tr>
+                    <tr><td>Total MPs</td><td>${stats.total}</td><td><span class="status correct">✅</span></td></tr>
+                    <tr><td>MPs with Email</td><td>${stats.withEmail}</td><td><span class="status ${stats.withEmail > 0 ? 'correct' : 'error'}">${stats.withEmail > 0 ? '✅' : '❌'}</span></td></tr>
+                    <tr><td>MPs with Phone</td><td>${stats.withPhone}</td><td><span class="status ${stats.withPhone > 0 ? 'correct' : 'error'}">${stats.withPhone > 0 ? '✅' : '❌'}</span></td></tr>
+                    <tr><td>MPs with Website</td><td>${stats.withWebsite}</td><td><span class="status ${stats.withWebsite > 0 ? 'correct' : 'error'}">${stats.withWebsite > 0 ? '✅' : '❌'}</span></td></tr>
+                    <tr><td>Political Parties</td><td>${stats.parties}</td><td><span class="status correct">✅</span></td></tr>
+                </table>
+            `;
+        }
+
+        function displayVerificationResults() {
+            let html = '<table class="verification-table"><tr><th>MP</th><th>Field</th><th>Expected</th><th>Actual</th><th>Status</th></tr>';
+            
+            Object.keys(expectedData).forEach(mpId => {
+                const expected = expectedData[mpId];
+                const actual = mpsData.find(mp => mp.id === mpId);
+                
+                if (!actual) {
+                    html += `<tr class="incorrect-data"><td>${expected.name}</td><td>Record</td><td>Found</td><td>Not Found</td><td>❌</td></tr>`;
+                    return;
+                }
+
+                // Check each field
+                Object.keys(expected).forEach(field => {
+                    const expectedValue = expected[field];
+                    const actualValue = actual[field];
+                    const isCorrect = Array.isArray(expectedValue) ? 
+                        JSON.stringify(expectedValue) === JSON.stringify(actualValue) :
+                        expectedValue === actualValue;
+                    
+                    const rowClass = isCorrect ? 'correct-data' : 'incorrect-data';
+                    const status = isCorrect ? '✅' : '❌';
+                    
+                    html += `<tr class="${rowClass}">
+                        <td>${expected.name}</td>
+                        <td>${field}</td>
+                        <td>${Array.isArray(expectedValue) ? expectedValue.join(', ') : expectedValue || 'N/A'}</td>
+                        <td>${Array.isArray(actualValue) ? actualValue.join(', ') : actualValue || 'N/A'}</td>
+                        <td>${status}</td>
+                    </tr>`;
+                });
+            });
+            
+            html += '</table>';
+            document.getElementById('verification-results').innerHTML = html;
+        }
+
+        function displayMPTests() {
+            let html = '';
+            
+            mpsData.forEach(mp => {
+                const hasRealEmail = mp.email && !mp.email.includes('contact@parliament.uk') && !mp.email.includes('generic');
+                const hasRealPhone = mp.phone && mp.phone !== '+44 20 7219 3000';
+                const hasPostcodes = mp.postcodes && mp.postcodes.length > 0;
+                
+                html += `
+                    <div class="mp-card">
+                        <div class="mp-name">${mp.displayName}</div>
+                        <div class="mp-details">🏛️ <strong>Constituency:</strong> ${mp.constituency}</div>
+                        <div class="mp-details">🎭 <strong>Party:</strong> ${mp.party}</div>
+                        <div class="mp-details">📧 <strong>Email:</strong> ${mp.email || 'Not provided'} 
+                            <span class="status ${hasRealEmail ? 'correct' : 'error'}">${hasRealEmail ? '✅ Real' : '❌ Generic'}</span>
+                        </div>
+                        <div class="mp-details">📞 <strong>Phone:</strong> ${mp.phone || 'Not provided'} 
+                            <span class="status ${hasRealPhone ? 'correct' : 'error'}">${hasRealPhone ? '✅ Real' : '❌ Generic'}</span>
+                        </div>
+                        <div class="mp-details">📮 <strong>Postcodes:</strong> ${mp.postcodes ? mp.postcodes.join(', ') : 'Not provided'} 
+                            <span class="status ${hasPostcodes ? 'correct' : 'error'}">${hasPostcodes ? '✅' : '❌'}</span>
+                        </div>
+                        <div class="mp-details">🌐 <strong>Website:</strong> ${mp.website || 'Not provided'}</div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('mp-tests').innerHTML = html;
+        }
+
+        // Search functionality
+        function performSearch(query) {
+            if (!query.trim()) {
+                document.getElementById('search-results').innerHTML = '';
+                return;
+            }
+
+            const results = mpsData.filter(mp => {
+                const searchFields = [
+                    mp.name,
+                    mp.displayName,
+                    mp.constituency,
+                    mp.party,
+                    ...(mp.postcodes || []),
+                    ...(mp.constituencyPostcodes || [])
+                ].join(' ').toLowerCase();
+                
+                return searchFields.includes(query.toLowerCase());
+            });
+
+            let html = `<h4>Search Results for "${query}" (${results.length} found):</h4>`;
+            
+            if (results.length === 0) {
+                html += '<div class="result-item">No MPs found matching your search.</div>';
+            } else {
+                results.forEach(mp => {
+                    html += `
+                        <div class="result-item">
+                            <strong>${mp.displayName}</strong> (${mp.party})<br>
+                            📍 ${mp.constituency}<br>
+                            📧 ${mp.email || 'Email not available'}<br>
+                            📞 ${mp.phone || 'Phone not available'}
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('search-results').innerHTML = html;
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            performSearch(e.target.value);
+        });
+
+        // Load data when page loads
+        loadMPData();
+    </script>
+</body>
+</html>

@@ -74,6 +74,172 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Search MPs by query parameter
+router.get('/search', (req, res) => {
+  const query = (req.query.q || '').toString().toLowerCase().trim();
+  const limit = parseInt((req.query.limit || '20').toString());
+
+  if (!query) {
+    return res.status(400).json({ error: 'Query parameter (q) is required' });
+  }
+
+  const cacheKey = `mp_search_${query}_${limit}`;
+  const cachedData = cache.get(cacheKey);
+
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
+  const mps = getMPs();
+
+  // Check if query is a postcode format
+  const postcodePattern = /^[a-z]{1,2}[0-9][0-9a-z]?\s?[0-9][a-z]{2}$/i;
+  const isPostcode = postcodePattern.test(query.replace(/\s+/g, ''));
+
+  let results;
+
+  if (isPostcode) {
+    // Normalize the postcode (remove spaces, uppercase)
+    const normalizedPostcode = query.replace(/\s+/g, '').toUpperCase();
+
+    // First, try to find an exact match
+    const exactMatch = mps.find(mp => 
+      mp.postcodes?.some(p => p.replace(/\s+/g, '').toUpperCase() === normalizedPostcode)
+    );
+
+    if (exactMatch) {
+      results = [exactMatch];
+    } else {
+      // If no exact match, try to match just the outward code (first part of postcode)
+      const outwardCode = normalizedPostcode.split(/\d/)[0]; // Extract the letter prefix
+
+      if (outwardCode && outwardCode.length >= 1) {
+        results = mps.filter(mp => 
+          mp.postcodes?.some(p => p.replace(/\s+/g, '').toUpperCase().startsWith(outwardCode))
+        );
+      } else {
+        results = [];
+      }
+    }
+  } else {
+    // General search across all fields
+    results = mps.filter(mp => {
+      // Search in all searchable fields
+      const searchableText = [
+        mp.name,
+        mp.displayName,
+        mp.fullTitle,
+        mp.constituency,
+        mp.party,
+        mp.partyAbbreviation,
+        ...(mp.postcodes || [])
+      ].join(' ').toLowerCase();
+
+      return searchableText.includes(query);
+    });
+  }
+
+  // Apply limit
+  const limitedResults = results.slice(0, limit);
+
+  cache.set(cacheKey, limitedResults, 600); // Cache for 10 minutes
+  res.json(limitedResults);
+});
+
+// Find MPs by postcode
+router.get('/postcode/:postcode', (req, res) => {
+  const postcode = req.params.postcode.toUpperCase().trim();
+
+  if (!postcode) {
+    return res.status(400).json({ error: 'Postcode parameter is required' });
+  }
+
+  const cacheKey = `mp_postcode_${postcode}`;
+  const cachedData = cache.get(cacheKey);
+
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
+  const mps = getMPs();
+
+  // Normalize the postcode (remove spaces, uppercase)
+  const normalizedPostcode = postcode.replace(/\s+/g, '');
+
+  // First, try to find an exact match
+  const exactMatch = mps.find(mp => 
+    mp.postcodes?.some(p => p.replace(/\s+/g, '').toUpperCase() === normalizedPostcode)
+  );
+
+  if (exactMatch) {
+    cache.set(cacheKey, exactMatch);
+    return res.json(exactMatch);
+  }
+
+  // If no exact match, try to match just the outward code (first part of postcode)
+  const outwardCode = normalizedPostcode.split(/\d/)[0]; // Extract the letter prefix
+
+  if (outwardCode && outwardCode.length >= 1) {
+    const match = mps.find(mp => 
+      mp.postcodes?.some(p => p.replace(/\s+/g, '').toUpperCase().startsWith(outwardCode))
+    );
+
+    if (match) {
+      cache.set(cacheKey, match);
+      return res.json(match);
+    }
+  }
+
+  res.status(404).json({ error: 'No MP found for this postcode' });
+});
+
+// Find MPs by constituency
+router.get('/constituency/:name', (req, res) => {
+  const constituencyName = req.params.name.toLowerCase().trim();
+
+  if (!constituencyName) {
+    return res.status(400).json({ error: 'Constituency name parameter is required' });
+  }
+
+  const cacheKey = `mp_constituency_${constituencyName}`;
+  const cachedData = cache.get(cacheKey);
+
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
+  const mps = getMPs();
+  const results = mps.filter(mp => mp.constituency.toLowerCase().includes(constituencyName));
+
+  cache.set(cacheKey, results);
+  res.json(results);
+});
+
+// Find MPs by party
+router.get('/party/:name', (req, res) => {
+  const partyName = req.params.name.toLowerCase().trim();
+
+  if (!partyName) {
+    return res.status(400).json({ error: 'Party name parameter is required' });
+  }
+
+  const cacheKey = `mp_party_${partyName}`;
+  const cachedData = cache.get(cacheKey);
+
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
+  const mps = getMPs();
+  const results = mps.filter(mp => 
+    mp.party.toLowerCase().includes(partyName) || 
+    mp.partyAbbreviation.toLowerCase().includes(partyName)
+  );
+
+  cache.set(cacheKey, results);
+  res.json(results);
+});
+
 // GET /api/mps/search - Search MPs by postcode, name, or constituency
 router.get('/search', async (req, res) => {
   try {

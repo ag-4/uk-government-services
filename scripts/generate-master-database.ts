@@ -136,7 +136,12 @@ class MasterDatabaseGenerator {
     const constituencies = [...new Set(mps.map(mp => mp.constituency))].sort();
     
     // Create mappings
-    const mappings = {
+    const mappings: {
+      postcodeToMP: { [postcode: string]: string };
+      mpToPostcodes: { [mpId: string]: string[] };
+      constituencyToMP: { [constituency: string]: string };
+      constituencyToPostcodes: { [constituency: string]: string[] };
+    } = {
       postcodeToMP: {},
       mpToPostcodes: {},
       constituencyToMP: {},
@@ -144,18 +149,18 @@ class MasterDatabaseGenerator {
     };
     
     // MP to postcode mapping
-    mps.forEach(mp => {
+    mps.forEach((mp: any) => {
       mappings.mpToPostcodes[mp.id] = mp.postcodes || [];
       mappings.constituencyToMP[mp.constituency] = mp.id;
       
-      (mp.postcodes || []).forEach(postcode => {
+      (mp.postcodes || []).forEach((postcode: string) => {
         mappings.postcodeToMP[postcode] = mp.id;
       });
     });
     
     // Constituency to postcode mapping
-    constituencies.forEach(constituency => {
-      const mpInConstituency = mps.find(mp => mp.constituency === constituency);
+    constituencies.forEach((constituency: string) => {
+      const mpInConstituency = mps.find((mp: any) => mp.constituency === constituency);
       if (mpInConstituency) {
         mappings.constituencyToPostcodes[constituency] = mpInConstituency.constituencyPostcodes || [];
       }

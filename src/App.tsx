@@ -4,7 +4,7 @@ import { Menu, X, Crown, Users, FileText, MessageSquare, Vote, Phone, AlertCircl
 import Header from './components/Header';
 import Hero from './components/Hero';
 import NewsSection from './components/NewsSection';
-import MPSearch from './components/MPSearch';
+import { MPSearch } from './components/MPSearch';
 import MessageTemplates from './components/MessageTemplates';
 import CitizenRights from './components/CitizenRights';
 import VotingInfo from './components/VotingInfo';

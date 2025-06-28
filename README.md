@@ -53,7 +53,10 @@ cd uk-gov-services
 
 # Install dependencies
 npm install
+```
+   npm install
 
+```bash
 # Start development server
 npm run dev
 ```
@@ -133,3 +136,4 @@ For questions or support:
 ---
 
 **Built with ❤️ for UK citizens to easily access government services and connect with their representatives.**
+   npm run start-all

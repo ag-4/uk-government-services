@@ -54,6 +54,9 @@ export function MPSearch() {
   const [mpLoading, setMpLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  // Image error handling
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
   // Load MPs data on component mount
   useEffect(() => {
     loadMPs();
@@ -198,15 +201,36 @@ export function MPSearch() {
     setSelectedMP(mp);
   };
 
+  const handleImageError = (mpId: string) => {
+    setImageErrors(prev => new Set(prev).add(mpId));
+  };
+
+  const getImageUrl = (mp: MP) => {
+    if (imageErrors.has(mp.id)) {
+      // Return party logo or placeholder if main image failed
+      const partyLogos: { [key: string]: string } = {
+        'Conservative': '/images/conservative-logo.jpeg',
+        'Labour': '/images/labour-logo.png',
+        'Liberal Democrat': '/images/lib-dem-logo.png',
+        'Green': '/images/green-logo.png',
+        'SNP': '/images/snp-logo.png',
+        'Scottish National Party': '/images/snp-logo.png'
+      };
+      return partyLogos[mp.party] || '/images/mp-placeholder.jpg';
+    }
+    return mp.image || '/images/mp-placeholder.jpg';
+  };
+
   const renderMPCard = (mp: MP) => (
     <Card key={mp.id} className="hover:shadow-lg transition-shadow cursor-pointer mb-4" onClick={() => handleSelectMP(mp)}>
       <CardHeader>
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
             <img
-              src={mp.image || '/images/mp-placeholder.jpg'}
+              src={getImageUrl(mp)}
               alt={mp.name}
               className="h-full w-full object-cover"
+              onError={() => handleImageError(mp.id)}
             />
           </Avatar>
           <div className="flex-1">
@@ -229,9 +253,10 @@ export function MPSearch() {
         <div className="flex items-center gap-6">
           <Avatar className="h-24 w-24">
             <img
-              src={mp.image || '/images/mp-placeholder.jpg'}
+              src={getImageUrl(mp)}
               alt={mp.name}
               className="h-full w-full object-cover"
+              onError={() => handleImageError(mp.id)}
             />
           </Avatar>
           <div className="flex-1">

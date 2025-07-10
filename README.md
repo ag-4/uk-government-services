@@ -135,5 +135,14 @@ For questions or support:
 
 ---
 
+---
+
+## 👨‍💻 Developer
+
+**Designed & Developed by Ibrahim Altaqatqa**
+- 📍 Based in Manchester, UK
+- 📞 Phone: 07522187669
+- 💼 Specializing in Government Digital Services
+
 **Built with ❤️ for UK citizens to easily access government services and connect with their representatives.**
    npm run start-all

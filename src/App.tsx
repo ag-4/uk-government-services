@@ -5,11 +5,11 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import NewsSection from './components/NewsSection';
 import { MPSearch } from './components/MPSearch';
-import MessageTemplates from './components/MessageTemplates';
+import { MessageTemplates } from './components/MessageTemplates';
+import { Footer } from './components/Footer';
 import CitizenRights from './components/CitizenRights';
 import VotingInfo from './components/VotingInfo';
 import CallToAction from './components/CallToAction';
-import Footer from './components/Footer';
 import ErrorBoundaryNew from './components/EnhancedErrorBoundary';
 import './App.css';
 

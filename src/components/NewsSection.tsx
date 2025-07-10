@@ -35,6 +35,12 @@ export default function NewsSection() {
 
   useEffect(() => {
     fetchNews();
+    
+    // Set up periodic news fetching every 2 minutes
+    const interval = setInterval(fetchNews, 120000);
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -183,10 +189,15 @@ function NewsCard({ news, formatTimestamp }: NewsCardProps) {
               <span className="font-medium text-primary">{news.source}</span>
             </div>
             
-            <button className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 font-medium">
+            <a 
+              href={news.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 font-medium"
+            >
               <span>Read more</span>
               <ExternalLink className="w-4 h-4" />
-            </button>
+            </a>
           </div>
         </div>
       </div>

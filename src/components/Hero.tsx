@@ -27,7 +27,7 @@ export default function Hero() {
             <div className="space-y-4">
               <div className="inline-flex items-center space-x-2 bg-accent px-3 py-1 rounded-full text-sm font-medium">
                 <span>🇬🇧</span>
-                <span>Unofficial Government Service</span>
+                <span>GOVWHIZ Portal</span>
               </div>
               
               <h1 className="text-4xl lg:text-6xl font-bold leading-tight">

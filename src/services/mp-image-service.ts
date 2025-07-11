@@ -34,11 +34,11 @@ class MPImageService {
 
     try {
       // Try multiple sources in order of reliability
-      let imageUrl = await this.tryParliamentAPI(mp) ||
-                     await this.tryTheyWorkForYou(mp) ||
-                     await this.tryWikipedia(mp) ||
-                     await this.tryOfficialParliamentSite(mp) ||
-                     this.getDefaultImage(mp);
+      const imageUrl = await this.tryParliamentAPI(mp) ||
+                       await this.tryTheyWorkForYou(mp) ||
+                       await this.tryWikipedia(mp) ||
+                       await this.tryOfficialParliamentSite(mp) ||
+                       this.getDefaultImage(mp);
 
       // Cache the result
       this.imageCache.set(cacheKey, imageUrl);

@@ -130,15 +130,26 @@ npm run type-check   # Run TypeScript compiler check
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**Note:** This project is under a proprietary license that restricts modifications and contributions.
 
-## 📝 License
+If you're interested in:
+- **Reporting Issues**: Please contact owl47d@gmail.com
+- **Suggesting Features**: Email your ideas to owl47d@gmail.com
+- **Collaboration**: Reach out to discuss potential partnerships
+- **Learning**: Feel free to study the code for educational purposes
 
-This project is licensed under the MIT License.
+For any contributions or modifications, please contact Ibrahim Altaqatqa at owl47d@gmail.com to discuss permissions.
+
+## 📄 License
+
+This project is licensed under a **Proprietary License** - see the [LICENSE](LICENSE) file for details.
+
+**Key Points:**
+- ✅ **Viewing & Learning**: You may view and study the code for educational purposes
+- ❌ **No Modification**: Modification or derivative works are not permitted
+- ❌ **No Distribution**: Redistribution is not allowed
+- ❌ **No Commercial Use**: Commercial use is prohibited
+- 📧 **Contact for Permissions**: owl47d@gmail.com
 
 ## 📞 Support
 

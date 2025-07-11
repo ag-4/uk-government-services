@@ -13,24 +13,6 @@ Write-Host "3. Are logged into GitHub" -ForegroundColor White
 Write-Host ""
 Read-Host "Press Enter to continue"
 
-# Function to check if command succeeded
-function Test-Command {
-    param($Command, $Description)
-    Write-Host "$Description..." -ForegroundColor Cyan
-    try {
-        Invoke-Expression $Command
-        if ($LASTEXITCODE -ne 0) {
-            throw "Command failed with exit code $LASTEXITCODE"
-        }
-        Write-Host "✓ Success" -ForegroundColor Green
-        return $true
-    }
-    catch {
-        Write-Host "✗ Failed: $_" -ForegroundColor Red
-        return $false
-    }
-}
-
 # Check if Git is installed
 Write-Host "Checking if Git is installed..." -ForegroundColor Cyan
 try {
@@ -47,27 +29,54 @@ catch {
 Write-Host ""
 
 # Step 1: Initialize Git repository
-if (-not (Test-Command "git init" "Step 1: Initializing Git repository")) {
+Write-Host "Step 1: Initializing Git repository..." -ForegroundColor Cyan
+try {
+    git init
+    if ($LASTEXITCODE -ne 0) { throw "Git init failed" }
+    Write-Host "✓ Success" -ForegroundColor Green
+}
+catch {
+    Write-Host "✗ Failed to initialize Git repository" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
 
 # Step 2: Add all files
-if (-not (Test-Command "git add ." "Step 2: Adding all files to Git")) {
+Write-Host "Step 2: Adding all files to Git..." -ForegroundColor Cyan
+try {
+    git add .
+    if ($LASTEXITCODE -ne 0) { throw "Git add failed" }
+    Write-Host "✓ Success" -ForegroundColor Green
+}
+catch {
+    Write-Host "✗ Failed to add files" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
 
 # Step 3: Create initial commit
-$commitMessage = "Initial commit: UK Government Services Platform`n`n- Complete government services platform with MP search`n- Newsletter subscription system with email templates`n- Citizen rights and voting information`n- Legal compliance pages (Privacy Policy, Cookie Policy)`n- Responsive design with accessibility features`n- Created by Ibrahim Altaqatqa (owl47d@gmail.com)"
-
-if (-not (Test-Command "git commit -m `"$commitMessage`"" "Step 3: Creating initial commit")) {
+Write-Host "Step 3: Creating initial commit..." -ForegroundColor Cyan
+$commitMessage = "Initial commit: UK Government Services Platform - Complete government services platform with MP search, newsletter subscription, and legal compliance pages. Created by Ibrahim Altaqatqa."
+try {
+    git commit -m $commitMessage
+    if ($LASTEXITCODE -ne 0) { throw "Git commit failed" }
+    Write-Host "✓ Success" -ForegroundColor Green
+}
+catch {
+    Write-Host "✗ Failed to create commit" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
 
 # Step 4: Set main branch
-if (-not (Test-Command "git branch -M main" "Step 4: Setting up main branch")) {
+Write-Host "Step 4: Setting up main branch..." -ForegroundColor Cyan
+try {
+    git branch -M main
+    if ($LASTEXITCODE -ne 0) { throw "Branch setup failed" }
+    Write-Host "✓ Success" -ForegroundColor Green
+}
+catch {
+    Write-Host "✗ Failed to set main branch" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -86,7 +95,14 @@ if ([string]::IsNullOrWhiteSpace($repoUrl)) {
 }
 
 # Step 6: Add remote origin
-if (-not (Test-Command "git remote add origin $repoUrl" "Step 5: Adding remote origin")) {
+Write-Host "Step 5: Adding remote origin..." -ForegroundColor Cyan
+try {
+    git remote add origin $repoUrl
+    if ($LASTEXITCODE -ne 0) { throw "Remote add failed" }
+    Write-Host "✓ Success" -ForegroundColor Green
+}
+catch {
+    Write-Host "✗ Failed to add remote origin" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -97,9 +113,7 @@ Write-Host "Note: You may be prompted for GitHub authentication." -ForegroundCol
 
 try {
     git push -u origin main
-    if ($LASTEXITCODE -ne 0) {
-        throw "Push failed"
-    }
+    if ($LASTEXITCODE -ne 0) { throw "Push failed" }
     Write-Host "✓ Successfully pushed to GitHub!" -ForegroundColor Green
 }
 catch {

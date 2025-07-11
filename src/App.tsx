@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Crown, Users, FileText, MessageSquare, Vote, Phone, AlertCircle } from 'lucide-react';
+import { Menu, X, Crown, Users, FileText, MessageSquare, Vote, Phone, AlertCircle, Mail } from 'lucide-react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import NewsSection from './components/NewsSection';
 import { MPSearch } from './components/MPSearch';
 import { MessageTemplates } from './components/MessageTemplates';
+import { NewsletterSubscription } from './components/NewsletterSubscription';
 import { Footer } from './components/Footer';
 import CitizenRights from './components/CitizenRights';
 import VotingInfo from './components/VotingInfo';
@@ -57,6 +58,9 @@ function AppContent() {
             <NavPill onClick={() => scrollToSection('templates')} active={activeSection === 'templates'} icon={MessageSquare}>
               Contact Templates
             </NavPill>
+            <NavPill onClick={() => scrollToSection('newsletter')} active={activeSection === 'newsletter'} icon={Mail}>
+              Newsletter
+            </NavPill>
             <NavPill onClick={() => scrollToSection('rights')} active={activeSection === 'rights'} icon={AlertCircle}>
               Your Rights
             </NavPill>
@@ -88,6 +92,16 @@ function AppContent() {
       <div id="templates" className="scroll-mt-32">
         <ErrorBoundaryNew>
           <MessageTemplates />
+        </ErrorBoundaryNew>
+      </div>
+      
+      <div id="newsletter" className="scroll-mt-32">
+        <ErrorBoundaryNew>
+          <section className="py-16 bg-gray-50">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <NewsletterSubscription />
+            </div>
+          </section>
         </ErrorBoundaryNew>
       </div>
       

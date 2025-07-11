@@ -1,32 +1,53 @@
-# UK Government Services Portal
+# 🇬🇧 UK Government Services Platform
 
-A comprehensive web portal providing UK citizens with easy access to government services, MP information, and civic resources.
+<div align="center">
+  <img src="public/images/govwhiz-logo.svg" alt="UK Government Services" width="200"/>
+  <h3>Connecting Citizens with Their Government Representatives</h3>
+  <p><em>A modern, accessible platform bridging the gap between UK citizens and their government</em></p>
+</div>
 
-## 🌟 Features
+---
 
-### Find Your MP
-- **Complete UK MP Database**: Search among 558 real UK MPs with accurate contact information
-- **Comprehensive Postcode Coverage**: 570+ postcode areas mapped to constituencies
-- **Smart Search**: Supports full postcodes (SW1A 0AA), area codes (SW1), MP names, parties, and constituencies
-- **Real-time Results**: Instant, accurate MP lookup with contact details, photos, and biographical information
+## 🌟 Overview
 
-### Government Services
-- **Digital Services Directory**: Easy access to key government services
-- **Service Categories**: Health, Education, Transport, Benefits, and more
-- **Quick Links**: Direct links to gov.uk services and applications
+The UK Government Services Platform is a comprehensive digital solution designed to empower UK citizens with easy access to government information, their local representatives, and essential civic services. Built with modern web technologies and following UK government accessibility standards.
 
-### Citizen Information
-- **Voting Information**: Registration guides, polling locations, and election dates
-- **Citizen Rights**: Comprehensive guide to UK citizen rights and responsibilities
-- **News & Updates**: Latest government announcements and policy updates
+## ✨ Key Features
 
-## 🚀 Technology Stack
+### 🔍 **MP Search System**
+- **Postcode-based search** - Find your MP instantly using your postcode
+- **Comprehensive MP database** - Complete information for all 650 UK constituencies
+- **Contact information** - Direct access to MP contact details and office information
+- **Real MP photos** - Authentic photographs and biographical information
 
-- **Frontend**: React 18 with TypeScript
+### 📧 **Newsletter Subscription Service**
+- **Multiple subscription types** - Newsletter, events, urgent updates
+- **Interest-based categories** - Healthcare, Education, Environment, Economy
+- **Professional email templates** - Newsletter and event notification templates
+- **Subscription management** - Full control over preferences and unsubscribe options
+- **UK GDPR compliant** - Full compliance with Data Protection Act 2018
+
+### 🏛️ **Government Information Hub**
+- **Latest news and updates** - Government announcements and policy changes
+- **Citizen rights information** - Know your rights and responsibilities
+- **Voting guidance** - Registration and voting process information
+- **Message templates** - Pre-written templates for contacting representatives
+
+### 📱 **User Experience**
+- **Responsive design** - Works seamlessly on all devices
+- **Accessibility compliant** - WCAG 2.1 AA standards
+- **Modern UI/UX** - Clean, intuitive interface following UK Government Design System principles
+- **Fast performance** - Optimized for speed and efficiency
+
+## 🛠️ Technology Stack
+
+- **Frontend Framework**: React 18 with TypeScript
+- **Styling**: Tailwind CSS
 - **Build Tool**: Vite
-- **Styling**: Tailwind CSS with custom UK Government Design System components
+- **UI Components**: Custom components with Radix UI primitives
 - **Icons**: Lucide React
-- **Data**: Static JSON files with comprehensive UK parliamentary data
+- **Data Management**: JSON-based data storage
+- **Email Templates**: Responsive HTML templates
 
 ## 📊 Data Accuracy
 

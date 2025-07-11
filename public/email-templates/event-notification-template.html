@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Notification - UK Government Services</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8fafc;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .event-highlight {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #22c55e;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .event-highlight h2 {
+            color: #15803d;
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+        }
+        
+        .event-date {
+            background: #22c55e;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .event-details {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .detail-icon {
+            width: 24px;
+            height: 24px;
+            background: #22c55e;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .detail-content {
+            flex: 1;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            color: #6b7280;
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            margin: 0.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #16a34a;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .agenda {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .agenda h3 {
+            color: #92400e;
+            margin: 0 0 1rem 0;
+        }
+        
+        .agenda-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            gap: 1rem;
+        }
+        
+        .agenda-time {
+            background: #f59e0b;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .agenda-description {
+            flex: 1;
+            color: #92400e;
+        }
+        
+        .important-info {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .important-info h4 {
+            color: #dc2626;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .contact-info {
+            background: #f0f9ff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .contact-info h3 {
+            color: #1e40af;
+            margin: 0 0 1rem 0;
+        }
+        
+        .contact-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .contact-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .footer {
+            background: #374151;
+            color: #d1d5db;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .footer h3 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: #d1d5db;
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .unsubscribe {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #4b5563;
+            font-size: 0.8rem;
+        }
+        
+        .unsubscribe a {
+            color: #9ca3af;
+            text-decoration: none;
+        }
+        
+        .unsubscribe a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .content {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .event-highlight {
+                padding: 1.5rem;
+            }
+            
+            .btn {
+                display: block;
+                margin: 0.5rem 0;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .agenda-item {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📅 Event Notification</h1>
+            <p>UK Government Services</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Event Highlight -->
+            <div class="event-highlight">
+                <div class="event-date">{{EVENT_DATE}} at {{EVENT_TIME}}</div>
+                <h2>{{EVENT_TITLE}}</h2>
+                <p style="margin: 0; font-size: 1.1rem; color: #374151;">{{EVENT_SUBTITLE}}</p>
+            </div>
+            
+            <!-- Personalized Greeting -->
+            <p><strong>Hello {{SUBSCRIBER_NAME}},</strong></p>
+            <p>We wanted to remind you about an upcoming event in {{SUBSCRIBER_LOCATION}} that might interest you. This event is part of our commitment to keeping citizens informed and engaged with local government activities.</p>
+            
+            <!-- Event Details -->
+            <div class="event-details">
+                <div class="detail-row">
+                    <div class="detail-icon">📍</div>
+                    <div class="detail-content">
+                        <div class="detail-label">Location</div>
+                        <div class="detail-value">{{EVENT_LOCATION}}<br>{{EVENT_ADDRESS}}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-row">
+                    <div class="detail-icon">🕒</div>
+                    <div class="detail-content">
+                        <div class="detail-label">Date & Time</div>
+                        <div class="detail-value">{{EVENT_FULL_DATE}}<br>{{EVENT_TIME}} - {{EVENT_END_TIME}}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-row">
+                    <div class="detail-icon">👥</div>
+                    <div class="detail-content">
+                        <div class="detail-label">Organizer</div>
+                        <div class="detail-value">{{EVENT_ORGANIZER}}<br>{{ORGANIZER_DEPARTMENT}}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-row">
+                    <div class="detail-icon">🎫</div>
+                    <div class="detail-content">
+                        <div class="detail-label">Registration</div>
+                        <div class="detail-value">{{REGISTRATION_STATUS}}<br>{{REGISTRATION_DETAILS}}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Event Description -->
+            <h3 style="color: #1e40af; margin-bottom: 1rem;">📋 About This Event</h3>
+            <p>{{EVENT_DESCRIPTION}}</p>
+            
+            <!-- Agenda -->
+            <div class="agenda">
+                <h3>📝 Event Agenda</h3>
+                <div class="agenda-item">
+                    <div class="agenda-time">{{AGENDA_TIME_1}}</div>
+                    <div class="agenda-description">{{AGENDA_ITEM_1}}</div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-time">{{AGENDA_TIME_2}}</div>
+                    <div class="agenda-description">{{AGENDA_ITEM_2}}</div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-time">{{AGENDA_TIME_3}}</div>
+                    <div class="agenda-description">{{AGENDA_ITEM_3}}</div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-time">{{AGENDA_TIME_4}}</div>
+                    <div class="agenda-description">{{AGENDA_ITEM_4}}</div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{{REGISTRATION_LINK}}" class="btn btn-primary">{{REGISTRATION_BUTTON_TEXT}}</a>
+                <a href="{{EVENT_DETAILS_LINK}}" class="btn btn-secondary">View Full Details</a>
+            </div>
+            
+            <!-- Important Information -->
+            <div class="important-info">
+                <h4>⚠️ Important Information</h4>
+                <ul style="margin: 0; padding-left: 1.5rem; color: #dc2626;">
+                    <li>{{IMPORTANT_INFO_1}}</li>
+                    <li>{{IMPORTANT_INFO_2}}</li>
+                    <li>{{IMPORTANT_INFO_3}}</li>
+                </ul>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="contact-info">
+                <h3>📞 Event Contact Information</h3>
+                <div class="contact-item"><strong>Event Coordinator:</strong> {{COORDINATOR_NAME}}</div>
+                <div class="contact-item"><strong>Email:</strong> {{COORDINATOR_EMAIL}}</div>
+                <div class="contact-item"><strong>Phone:</strong> {{COORDINATOR_PHONE}}</div>
+                <div class="contact-item"><strong>Office Hours:</strong> {{OFFICE_HOURS}}</div>
+            </div>
+            
+            <!-- Related Events -->
+            <h3 style="color: #1e40af; margin-bottom: 1rem;">🔗 You Might Also Be Interested In</h3>
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 2rem;">
+                <p style="margin: 0 0 0.5rem 0;"><strong>{{RELATED_EVENT_1_TITLE}}</strong></p>
+                <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{RELATED_EVENT_1_DATE}} | {{RELATED_EVENT_1_LOCATION}}</p>
+            </div>
+            
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 2rem;">
+                <p style="margin: 0 0 0.5rem 0;"><strong>{{RELATED_EVENT_2_TITLE}}</strong></p>
+                <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{RELATED_EVENT_2_DATE}} | {{RELATED_EVENT_2_LOCATION}}</p>
+            </div>
+            
+            <!-- Closing -->
+            <p>We hope to see you there! Your participation in local government activities helps strengthen our democratic processes and ensures your voice is heard.</p>
+            
+            <p style="margin-top: 2rem;"><strong>Best regards,</strong><br>
+The UK Government Services Team</p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <h3>UK Government Services</h3>
+            <p>Connecting Citizens with Their Government</p>
+            
+            <div class="footer-links">
+                <a href="{{SITE_URL}}">Visit Website</a>
+                <a href="{{SITE_URL}}/subscription-management.html">Manage Subscription</a>
+                <a href="{{SITE_URL}}/privacy-policy.html">Privacy Policy</a>
+                <a href="{{SITE_URL}}/about-us.html">About Us</a>
+            </div>
+            
+            <div class="unsubscribe">
+                <p>You're receiving this email because you subscribed to event notifications from UK Government Services.</p>
+                <p>
+                    <a href="{{UNSUBSCRIBE_EVENTS_LINK}}">Unsubscribe from Events</a> | 
+                    <a href="{{UPDATE_PREFERENCES_LINK}}">Update Preferences</a> | 
+                    <a href="{{SITE_URL}}/subscription-management.html">Manage All Subscriptions</a>
+                </p>
+                <p style="margin-top: 1rem; font-size: 0.7rem; color: #6b7280;">
+                    UK Government Services<br>
+                    Westminster, London SW1A 0AA<br>
+                    This service complies with UK GDPR and Data Protection Act 2018
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

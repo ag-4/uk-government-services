@@ -60,3 +60,42 @@ coverage/
 
 # Vite
 .vite-temp
+
+# Test and development files
+*test*.html
+*test*.js
+*test*.cjs
+*debug*.cjs
+*analyze*.cjs
+*check*.cjs
+*cleanup*.cjs
+*complete*.cjs
+*expand*.cjs
+*find*.cjs
+*generate*.cjs
+*improve*.cjs
+*save*.cjs
+add-*.cjs
+final-*.cjs
+
+# Large generated JSON files
+*.json.backup
+constituency-*.json
+postcode-mapping-*.json
+mps-updated.json
+real_mps_*.json
+sample-mps.json
+package-updated.json
+
+# CSV files
+*.csv
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+
+# Backup files
+*.backup
+*.bak
+*.orig

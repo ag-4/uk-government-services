@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Management - UK Government Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8fafc;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card h2 {
+            color: #1e40af;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .subscription-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .status-active {
+            background: #f0fdf4;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+
+        .status-inactive {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+
+        .subscription-details {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .detail-value {
+            color: #6b7280;
+        }
+
+        .subscription-types {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .subscription-type {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .subscription-type.active {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .type-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .type-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .newsletter-icon {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .events-icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .alerts-icon {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #22c55e;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(26px);
+        }
+
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .interest-tag {
+            padding: 0.5rem 1rem;
+            background: #f3f4f6;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .interest-tag.selected {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: 1px solid #3b82f6;
+        }
+
+        .button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .button-primary {
+            background: #1e40af;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .button-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .button-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .button-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .button-danger:hover {
+            background: #b91c1c;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            color: #15803d;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .compliance-notice {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .compliance-notice h3 {
+            color: #0c4a6e;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .compliance-notice p {
+            color: #075985;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>
+                🔧 Subscription Management
+            </h1>
+            <p>Manage your newsletter and event subscriptions for UK Government Services</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- No Subscription State -->
+        <div id="noSubscription" class="card">
+            <h2>📭 No Active Subscription</h2>
+            <p class="detail-value" style="margin-bottom: 2rem;">
+                You don't have an active subscription yet. Subscribe to stay informed about UK government services, 
+                political updates, and local events.
+            </p>
+            <a href="/" class="button button-primary">
+                📧 Subscribe Now
+            </a>
+        </div>
+
+        <!-- Active Subscription State -->
+        <div id="activeSubscription" class="hidden">
+            <!-- Subscription Status -->
+            <div class="card">
+                <div id="subscriptionStatus" class="subscription-status status-active">
+                    <span style="font-size: 1.5rem;">✅</span>
+                    <div>
+                        <strong>Subscription Active</strong>
+                        <p style="margin: 0; opacity: 0.8;">Your subscription is active and you're receiving updates</p>
+                    </div>
+                </div>
+
+                <h2>👤 Subscriber Information</h2>
+                <div class="subscription-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value" id="subscriberName">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value" id="subscriberEmail">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Location:</span>
+                        <span class="detail-value" id="subscriberAddress">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Phone:</span>
+                        <span class="detail-value" id="subscriberPhone">Not provided</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Subscribed Since:</span>
+                        <span class="detail-value" id="subscriptionDate">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email Frequency:</span>
+                        <span class="detail-value" id="emailFrequency">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Types -->
+            <div class="card">
+                <h2>📬 Subscription Types</h2>
+                <div class="subscription-types">
+                    <div class="subscription-type" id="newsletterType">
+                        <div class="type-info">
+                            <div class="type-icon newsletter-icon">📧</div>
+                            <div>
+                                <strong>Newsletter</strong>
+                                <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">Regular updates on government services and political news</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="toggleSubscriptionType('newsletter')"></div>
+                    </div>
+
+                    <div class="subscription-type" id="eventsType">
+                        <div class="type-info">
+                            <div class="type-icon events-icon">📅</div>
+                            <div>
+                                <strong>Events</strong>
+                                <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">Local government events and public meetings in your area</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="toggleSubscriptionType('events')"></div>
+                    </div>
+
+                    <div class="subscription-type" id="alertsType">
+                        <div class="type-info">
+                            <div class="type-icon alerts-icon">🚨</div>
+                            <div>
+                                <strong>Urgent Alerts</strong>
+                                <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">Important government announcements and emergency updates</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="toggleSubscriptionType('alerts')"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interests -->
+            <div class="card">
+                <h2>🎯 Areas of Interest</h2>
+                <p class="detail-value" style="margin-bottom: 1rem;">Customize your content based on your interests:</p>
+                <div class="interests-grid" id="interestsGrid">
+                    <!-- Interests will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <h2>⚙️ Manage Subscription</h2>
+                <div class="actions">
+                    <button class="button button-secondary" onclick="exportData()">
+                        📥 Export My Data
+                    </button>
+                    <button class="button button-primary" onclick="updateSubscription()">
+                        💾 Save Changes
+                    </button>
+                    <button class="button button-danger" onclick="unsubscribe()">
+                        🗑️ Unsubscribe
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Notice -->
+        <div class="compliance-notice">
+            <h3>🛡️ UK Data Protection Compliance</h3>
+            <p>
+                Your subscription data is processed in accordance with UK GDPR and the Data Protection Act 2018. 
+                You have the right to access, rectify, erase, or port your data. You can withdraw consent at any time 
+                by unsubscribing or contacting us. For more information, see our 
+                <a href="/privacy-policy.html" style="color: #0c4a6e; text-decoration: underline;">Privacy Policy</a>.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const SUBSCRIPTION_INTERESTS = [
+            'UK Politics', 'Local Government', 'Parliamentary Updates', 'Policy Changes',
+            'Voting Information', 'Citizen Rights', 'Government Services', 'Public Consultations',
+            'Community Events', 'Digital Government'
+        ];
+
+        let subscriptionData = null;
+
+        // Load subscription data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSubscriptionData();
+        });
+
+        function loadSubscriptionData() {
+            const stored = localStorage.getItem('newsletter_subscription');
+            
+            if (stored) {
+                subscriptionData = JSON.parse(stored);
+                displaySubscriptionData();
+                document.getElementById('noSubscription').classList.add('hidden');
+                document.getElementById('activeSubscription').classList.remove('hidden');
+            } else {
+                document.getElementById('noSubscription').classList.remove('hidden');
+                document.getElementById('activeSubscription').classList.add('hidden');
+            }
+        }
+
+        function displaySubscriptionData() {
+            if (!subscriptionData) return;
+
+            // Basic info
+            document.getElementById('subscriberName').textContent = subscriptionData.name;
+            document.getElementById('subscriberEmail').textContent = subscriptionData.email;
+            document.getElementById('subscriberAddress').textContent = subscriptionData.address;
+            document.getElementById('subscriberPhone').textContent = subscriptionData.phone || 'Not provided';
+            document.getElementById('emailFrequency').textContent = subscriptionData.frequency.charAt(0).toUpperCase() + subscriptionData.frequency.slice(1);
+            
+            // Subscription date
+            const date = new Date(subscriptionData.subscribedAt);
+            document.getElementById('subscriptionDate').textContent = date.toLocaleDateString('en-GB', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Subscription types
+            updateSubscriptionTypeDisplay('newsletter', subscriptionData.subscriptionTypes.newsletter);
+            updateSubscriptionTypeDisplay('events', subscriptionData.subscriptionTypes.events);
+            updateSubscriptionTypeDisplay('alerts', subscriptionData.subscriptionTypes.alerts);
+
+            // Interests
+            displayInterests();
+        }
+
+        function updateSubscriptionTypeDisplay(type, isActive) {
+            const element = document.getElementById(type + 'Type');
+            const toggle = element.querySelector('.toggle-switch');
+            
+            if (isActive) {
+                element.classList.add('active');
+                toggle.classList.add('active');
+            } else {
+                element.classList.remove('active');
+                toggle.classList.remove('active');
+            }
+        }
+
+        function displayInterests() {
+            const grid = document.getElementById('interestsGrid');
+            grid.innerHTML = '';
+            
+            SUBSCRIPTION_INTERESTS.forEach(interest => {
+                const tag = document.createElement('div');
+                tag.className = 'interest-tag';
+                tag.textContent = interest;
+                tag.onclick = () => toggleInterest(interest, tag);
+                
+                if (subscriptionData.interests.includes(interest)) {
+                    tag.classList.add('selected');
+                }
+                
+                grid.appendChild(tag);
+            });
+        }
+
+        function toggleSubscriptionType(type) {
+            if (!subscriptionData) return;
+            
+            subscriptionData.subscriptionTypes[type] = !subscriptionData.subscriptionTypes[type];
+            updateSubscriptionTypeDisplay(type, subscriptionData.subscriptionTypes[type]);
+        }
+
+        function toggleInterest(interest, element) {
+            if (!subscriptionData) return;
+            
+            const index = subscriptionData.interests.indexOf(interest);
+            if (index > -1) {
+                subscriptionData.interests.splice(index, 1);
+                element.classList.remove('selected');
+            } else {
+                subscriptionData.interests.push(interest);
+                element.classList.add('selected');
+            }
+        }
+
+        function updateSubscription() {
+            if (!subscriptionData) return;
+            
+            // Validate at least one subscription type is selected
+            const hasActiveSubscription = Object.values(subscriptionData.subscriptionTypes).some(Boolean);
+            if (!hasActiveSubscription) {
+                alert('Please select at least one subscription type.');
+                return;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('newsletter_subscription', JSON.stringify(subscriptionData));
+            
+            // Show success message
+            showAlert('✅ Your subscription preferences have been updated successfully!', 'success');
+        }
+
+        function exportData() {
+            if (!subscriptionData) return;
+            
+            const dataStr = JSON.stringify(subscriptionData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `subscription-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            
+            showAlert('📥 Your subscription data has been exported successfully!', 'success');
+        }
+
+        function unsubscribe() {
+            if (!subscriptionData) return;
+            
+            const confirmed = confirm(
+                'Are you sure you want to unsubscribe from all services? This action cannot be undone. ' +
+                'You will stop receiving newsletters, event notifications, and alerts.'
+            );
+            
+            if (confirmed) {
+                localStorage.removeItem('newsletter_subscription');
+                subscriptionData = null;
+                
+                showAlert('🗑️ You have been successfully unsubscribed from all services.', 'warning');
+                
+                setTimeout(() => {
+                    loadSubscriptionData();
+                }, 2000);
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

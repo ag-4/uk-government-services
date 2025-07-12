@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, ExternalLink, Filter, Sparkles, Building2, Scale, FileCheck, Globe, RefreshCw, Pause, Play, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Clock, ExternalLink, Filter, Sparkles, Building2, Scale, FileCheck, Globe, RefreshCw, Pause, Play, Trash2, AlertCircle } from 'lucide-react';
 
 interface NewsItem {
   id: string;
@@ -39,62 +39,11 @@ export default function NewsSection() {
   const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [status, setStatus] = useState<{ type: 'loading' | 'success' | 'error' | null; message: string }>({ type: null, message: '' });
-
-  useEffect(() => {
-    fetchNews();
-    
-    // Set up periodic news fetching every 2 minutes
-    const interval = setInterval(() => {
-      if (autoUpdateEnabled) {
-        fetchNews();
-      }
-    }, 120000);
-    
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, [autoUpdateEnabled]);
-
-  useEffect(() => {
-    if (selectedCategory === 'All') {
-      setFilteredNews(news);
-    } else {
-      setFilteredNews(news.filter(item => item.category === selectedCategory));
-    }
-  }, [news, selectedCategory]);
-
-  const fetchNews = async () => {
-    setLoading(true);
-    setStatus({ type: 'loading', message: 'Fetching latest UK news...' });
-    
-    try {
-      // First try to fetch from existing news.json
-      const response = await fetch('/data/news.json');
-      let data = await response.json();
-      
-      // Enhance with mock live news data
-      const mockNews = generateMockNews();
-      data = [...mockNews, ...data].slice(0, 12); // Combine and limit to 12 items
-      
-      setNews(data);
-      setFilteredNews(data);
-      setLastUpdated(new Date());
-      setStatus({ type: 'success', message: `Successfully loaded ${data.length} news articles` });
-      
-      // Hide status after 3 seconds
-      setTimeout(() => {
-        setStatus({ type: null, message: '' });
-      }, 3000);
-      
-    } catch (error) {
-      console.error('Error fetching news:', error);
-      setStatus({ type: 'error', message: 'Failed to fetch news. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const generateMockNews = (): NewsItem[] => {
     const mockArticles = [
@@ -139,6 +88,84 @@ export default function NewsSection() {
     return mockArticles.sort((a, b) => new Date(b.publishedAt || b.timestamp).getTime() - new Date(a.publishedAt || a.timestamp).getTime());
   };
 
+  const fetchNews = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+        setError(null);
+      } else {
+        setLoading(true);
+      }
+      setStatus({ type: 'loading', message: 'Fetching latest UK news...' });
+      
+      // First try to fetch from existing news.json
+      const response = await fetch('/data/news.json');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      let data = await response.json();
+      
+      // Enhance with mock live news data
+      const mockNews = generateMockNews();
+      data = [...mockNews, ...data].slice(0, 12); // Combine and limit to 12 items
+      
+      setNews(data);
+      setFilteredNews(data);
+      setLastUpdated(new Date());
+      setError(null);
+      setStatus({ type: 'success', message: `Successfully loaded ${data.length} news articles` });
+      
+      // Hide status after 3 seconds
+      setTimeout(() => {
+        setStatus({ type: null, message: '' });
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      setError('Failed to load news. Please try again later.');
+      setStatus({ type: 'error', message: 'Failed to fetch news. Please try again.' });
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNews();
+    
+    // Set up periodic news fetching every 2 minutes
+    const interval = setInterval(() => {
+      if (autoUpdateEnabled) {
+        fetchNews(true);
+      }
+    }, 120000);
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [autoUpdateEnabled, fetchNews]);
+
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(news.map(item => item.category)));
+    return ['All', ...uniqueCategories];
+  }, [news]);
+
+  useEffect(() => {
+    if (selectedCategory === 'All') {
+      setFilteredNews(news);
+    } else {
+      setFilteredNews(news.filter(item => item.category === selectedCategory));
+    }
+  }, [news, selectedCategory]);
+
+  const handleRefresh = useCallback(() => {
+    fetchNews(true);
+  }, [fetchNews]);
+
+  const handleCategoryChange = useCallback((category: string) => {
+    setSelectedCategory(category);
+  }, []);
+
   const toggleAutoUpdate = () => {
     setAutoUpdateEnabled(!autoUpdateEnabled);
   };
@@ -171,7 +198,7 @@ export default function NewsSection() {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
-  const categories = ['All', ...Array.from(new Set(news.map(item => item.category)))];
+
 
   if (loading) {
     return (
@@ -207,12 +234,13 @@ export default function NewsSection() {
           {/* Control Buttons */}
           <div className="flex flex-wrap justify-center gap-3 mb-6">
             <button
-              onClick={fetchNews}
-              disabled={loading}
+              onClick={handleRefresh}
+              disabled={loading || isRefreshing}
               className="uk-gov-button disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Refresh news articles"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Fetch Latest News
+              <RefreshCw className={`w-4 h-4 ${(loading || isRefreshing) ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Fetch Latest News'}
             </button>
             
             <button
@@ -259,12 +287,15 @@ export default function NewsSection() {
         </div>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
+        <div className="flex flex-wrap justify-center gap-2 mb-8" role="tablist" aria-label="News categories">
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              onClick={() => handleCategoryChange(category)}
+              role="tab"
+              aria-selected={selectedCategory === category}
+              aria-controls="news-grid"
+              className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                 selectedCategory === category
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -278,17 +309,37 @@ export default function NewsSection() {
           ))}
         </div>
 
-        {/* News Grid */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {filteredNews.map((item) => (
-            <NewsCard key={item.id} news={item} formatTimestamp={formatTimestamp} />
-          ))}
-        </div>
+        {/* Error Display */}
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700" role="alert">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
-        {filteredNews.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <Filter className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No news found for the selected category.</p>
+        {/* News Grid */}
+        {loading ? (
+          <LoadingSkeleton />
+        ) : filteredNews.length === 0 ? (
+          <div className="text-center py-12" role="status" aria-live="polite">
+            <Globe className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No news articles found</h3>
+            <p className="text-gray-600 mb-4">
+              {selectedCategory === 'All' 
+                ? 'No news articles are currently available.' 
+                : `No articles found in the "${selectedCategory}" category.`
+              }
+            </p>
+            <button onClick={handleRefresh} className="uk-gov-button">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <div id="news-grid" className="grid lg:grid-cols-2 gap-8" role="tabpanel" aria-live="polite">
+            {filteredNews.map((item) => (
+              <NewsCard key={item.id} news={item} formatTimestamp={formatTimestamp} />
+            ))}
           </div>
         )}
         
@@ -304,6 +355,26 @@ export default function NewsSection() {
     </section>
   );
 }
+
+const LoadingSkeleton = () => (
+  <div className="space-y-4">
+    {[...Array(4)].map((_, index) => (
+      <div key={index} className="uk-gov-card animate-pulse">
+        <div className="flex items-center justify-between mb-2">
+          <div className="h-4 bg-gray-200 rounded w-24"></div>
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+        </div>
+        <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="h-4 bg-gray-200 rounded w-20"></div>
+          <div className="h-8 bg-gray-200 rounded w-24"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 interface NewsCardProps {
   news: NewsItem;
@@ -326,7 +397,7 @@ function NewsCard({ news, formatTimestamp }: NewsCardProps) {
   };
 
   return (
-    <article className="uk-gov-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+    <article className="uk-gov-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
       {/* Live indicator for recent news */}
       {news.id.startsWith('LIVE_') && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
@@ -335,23 +406,31 @@ function NewsCard({ news, formatTimestamp }: NewsCardProps) {
       {/* Category Badge */}
       <div className="flex items-center justify-between mb-4">
         <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium border ${categoryClass}`}>
-          {CategoryIcon && <CategoryIcon className="w-4 h-4" />}
+          {CategoryIcon && <CategoryIcon className="w-4 h-4" aria-hidden="true" />}
           <span>{news.category}</span>
         </div>
         
         <div className="flex items-center space-x-2 text-sm text-gray-500">
-          <Clock className="w-4 h-4" />
-          <span>{getTimeAgo(publishedDate)}</span>
+          <Clock className="w-4 h-4" aria-hidden="true" />
+          <time dateTime={news.publishedAt || news.timestamp}>{getTimeAgo(publishedDate)}</time>
         </div>
       </div>
 
       {/* Content */}
       <div className="space-y-4">
-        <h3 className="text-xl font-bold text-gray-900 leading-tight hover:text-primary transition-colors">
-          {news.title}
+        <h3 className="text-xl font-bold text-gray-900 leading-tight">
+          <a 
+            href={news.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-primary transition-colors focus:outline-none focus:text-primary"
+            aria-describedby={`news-summary-${news.id}`}
+          >
+            {news.title}
+          </a>
         </h3>
         
-        <p className="text-gray-600 leading-relaxed">
+        <p id={`news-summary-${news.id}`} className="text-gray-600 leading-relaxed">
           {news.summary}
         </p>
         
@@ -366,10 +445,11 @@ function NewsCard({ news, formatTimestamp }: NewsCardProps) {
               href={news.url} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 font-medium transition-all hover:translate-x-1"
+              className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 font-medium transition-all hover:translate-x-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+              aria-label={`Read full article about ${news.title}`}
             >
               <span>Read Full Article</span>
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" aria-hidden="true" />
             </a>
           </div>
         </div>

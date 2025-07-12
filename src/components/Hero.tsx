@@ -1,7 +1,9 @@
-import React from 'react';
-import { ArrowRight, Users, FileText, Vote } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { ArrowRight, Users, FileText, Vote, ChevronDown } from 'lucide-react';
 
 export default function Hero() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -9,14 +11,36 @@ export default function Hero() {
     }
   };
 
+  const scrollToNextSection = () => {
+    const nextSection = document.getElementById('mp-search');
+    if (nextSection) {
+      nextSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    // Add focus management for accessibility
+    if (heroRef.current) {
+      heroRef.current.focus();
+    }
+  }, []);
+
   return (
-    <div className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white">
+    <div 
+      ref={heroRef}
+      className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white"
+      role="banner"
+      aria-label="UK Government Services Platform Hero Section"
+      tabIndex={-1}
+    >
       {/* Background Image */}
       <div className="absolute inset-0 bg-black/20">
         <img 
           src="/images/parliament-house.jpg" 
-          alt="UK Parliament Building" 
+          alt="UK Parliament Building - Houses of Parliament in Westminster, London" 
           className="w-full h-full object-cover mix-blend-overlay"
+          loading="eager"
+          decoding="async"
         />
       </div>
       
@@ -31,6 +55,7 @@ export default function Hero() {
               </div>
               
               <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
+                <span className="sr-only">GOVWHIZ - </span>
                 Your Voice in
                 <span className="text-accent block">British Democracy</span>
               </h1>
@@ -45,18 +70,20 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
                 onClick={() => scrollToSection('mp-search')}
-                className="uk-gov-accent inline-flex items-center justify-center space-x-2 text-lg"
+                className="uk-gov-accent inline-flex items-center justify-center space-x-2 text-lg focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-primary"
+                aria-label="Navigate to MP search section"
               >
-                <Users className="w-5 h-5" />
+                <Users className="w-5 h-5" aria-hidden="true" />
                 <span>Find Your MP</span>
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5" aria-hidden="true" />
               </button>
               
               <button 
                 onClick={() => scrollToSection('news')}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 transition-colors inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-md font-medium text-lg"
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 transition-colors inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-md font-medium text-lg focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary"
+                aria-label="Navigate to latest news section"
               >
-                <FileText className="w-5 h-5" />
+                <FileText className="w-5 h-5" aria-hidden="true" />
                 <span>Latest News</span>
               </button>
             </div>
@@ -101,6 +128,17 @@ export default function Hero() {
               onClick={() => scrollToSection('voting')}
             />
           </div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <button
+            onClick={scrollToNextSection}
+            className="text-white/80 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary"
+            aria-label="Scroll to next section"
+          >
+            <ChevronDown className="w-6 h-6" aria-hidden="true" />
+          </button>
         </div>
       </div>
     </div>

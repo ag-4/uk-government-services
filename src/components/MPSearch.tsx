@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Phone, Mail, ExternalLink, User, Building2, Wifi, WifiOff } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { Search, MapPin, Phone, Mail, ExternalLink, User, Building2, Wifi, WifiOff, Bookmark, BookmarkCheck } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar } from './ui/avatar';
+import { Badge } from './ui/badge';
+import { Skeleton } from './ui/skeleton';
 
 // Define the MP interface to match our data structure
 interface MP {
@@ -53,6 +55,10 @@ export function MPSearch() {
   const [selectedMP, setSelectedMP] = useState<MP | null>(null);
   const [mpLoading, setMpLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [bookmarkedMPs, setBookmarkedMPs] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const resultsPerPage = 10;
 
   // Image error handling
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
@@ -69,6 +75,12 @@ export function MPSearch() {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Load bookmarked MPs from localStorage
+    const savedBookmarks = localStorage.getItem('bookmarked-mps');
+    if (savedBookmarks) {
+      setBookmarkedMPs(new Set(JSON.parse(savedBookmarks)));
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -205,6 +217,26 @@ export function MPSearch() {
     setImageErrors(prev => new Set(prev).add(mpId));
   };
 
+  const toggleBookmark = useCallback((mpId: string) => {
+    setBookmarkedMPs(prev => {
+      const newBookmarks = new Set(prev);
+      if (newBookmarks.has(mpId)) {
+        newBookmarks.delete(mpId);
+      } else {
+        newBookmarks.add(mpId);
+      }
+      localStorage.setItem('bookmarked-mps', JSON.stringify([...newBookmarks]));
+      return newBookmarks;
+    });
+  }, []);
+
+  const paginatedResults = useMemo(() => {
+    const startIndex = (currentPage - 1) * resultsPerPage;
+    return searchResults.slice(startIndex, startIndex + resultsPerPage);
+  }, [searchResults, currentPage, resultsPerPage]);
+
+  const totalPages = Math.ceil(searchResults.length / resultsPerPage);
+
   const getImageUrl = (mp: MP) => {
     if (imageErrors.has(mp.id)) {
       // Return party logo or placeholder if main image failed
@@ -222,25 +254,57 @@ export function MPSearch() {
   };
 
   const renderMPCard = (mp: MP) => (
-    <Card key={mp.id} className="hover:shadow-lg transition-shadow cursor-pointer mb-4" onClick={() => handleSelectMP(mp)}>
+    <Card key={mp.id} className="hover:shadow-lg transition-shadow mb-4 group" role="article" aria-labelledby={`mp-${mp.id}-name`}>
       <CardHeader>
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
             <img
               src={getImageUrl(mp)}
-              alt={mp.name}
+              alt={`Portrait of ${mp.name}, MP for ${mp.constituency}`}
               className="h-full w-full object-cover"
               onError={() => handleImageError(mp.id)}
             />
           </Avatar>
           <div className="flex-1">
-            <CardTitle className="text-xl">{mp.name}</CardTitle>
+            <CardTitle id={`mp-${mp.id}-name`} className="text-xl">{mp.name}</CardTitle>
             <CardDescription className="text-lg">{mp.constituency}</CardDescription>
-            <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${
-              partyColors[mp.party] || 'bg-gray-600 text-white'
-            }`}>
-              {mp.party}
+            <div className="flex items-center gap-2 mt-2">
+              <Badge className={partyColors[mp.party] || 'bg-gray-600 text-white'}>
+                {mp.party}
+              </Badge>
+              {bookmarkedMPs.has(mp.id) && (
+                <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                  <BookmarkCheck className="h-3 w-3 mr-1" />
+                  Bookmarked
+                </Badge>
+              )}
             </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleBookmark(mp.id);
+              }}
+              aria-label={bookmarkedMPs.has(mp.id) ? `Remove ${mp.name} from bookmarks` : `Add ${mp.name} to bookmarks`}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              {bookmarkedMPs.has(mp.id) ? (
+                <BookmarkCheck className="h-4 w-4" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleSelectMP(mp)}
+              aria-label={`View details for ${mp.name}`}
+            >
+              View Details
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -460,12 +524,55 @@ export function MPSearch() {
 
       {searchAttempted && searchResults.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">
-            Search Results ({searchResults.length} found)
-          </h2>
-          <div className="space-y-4">
-            {searchResults.map(renderMPCard)}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">
+              Search Results ({searchResults.length} found)
+            </h2>
+            {searchResults.length > resultsPerPage && (
+              <div className="text-sm text-gray-600">
+                Showing {((currentPage - 1) * resultsPerPage) + 1}-{Math.min(currentPage * resultsPerPage, searchResults.length)} of {searchResults.length}
+              </div>
+            )}
           </div>
+          <div className="space-y-4">
+            {paginatedResults.map(renderMPCard)}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                aria-label="Previous page"
+              >
+                Previous
+              </Button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    aria-label={`Go to page ${page}`}
+                    aria-current={page === currentPage ? "page" : undefined}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="Next page"
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

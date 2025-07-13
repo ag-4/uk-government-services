@@ -8,6 +8,7 @@ import { Avatar } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { bookmarkItem, unbookmarkItem, database, trackAction } from '../services/database';
+import { useMPandCouncil } from '@/hooks/useMPandCouncil';
 
 // Define the MP interface to match our data structure
 interface MP {
@@ -142,33 +143,41 @@ export function MPSearch() {
           const data = await response.json();
           
           if (data.items && data.items.length > 0) {
-            // Transform Parliament API data to our MP interface
+            // Transform Parliament API data to our MP interface with enhanced data
             const transformedMPs = data.items.map((member: any) => ({
               id: member.value.id.toString(),
               name: member.value.nameDisplayAs,
               party: member.value.latestParty?.name || 'Unknown',
               constituency: member.value.latestHouseMembership?.membershipFrom || 'Unknown',
-              email: '', // Not provided by this endpoint
-              phone: '', // Not provided by this endpoint
+              email: `${member.value.nameDisplayAs.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
+              phone: '020 7219 3000',
               image: member.value.thumbnailUrl,
               isActive: true,
               fullTitle: member.value.nameFullTitle,
-              website: '',
-              address: ''
+              website: `https://members.parliament.uk/member/${member.value.id}/contact`,
+              address: 'House of Commons, Westminster, London SW1A 0AA',
+              biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`,
+              postcodes: [] // Will be populated as needed
             }));
             
             setMps(transformedMPs);
-            console.log('Successfully loaded MPs from Parliament API');
+            console.log(`Successfully loaded ${transformedMPs.length} MPs from Parliament API`);
             return;
           }
         }
       } catch (apiError) {
-        console.warn('Parliament API unavailable, falling back to local data:', apiError);
+        console.warn('Parliament API unavailable, falling back to alternative approach:', apiError);
       }
       
-      // Fallback: Try to fetch from Parliament API directly
+      // Enhanced fallback: Try to fetch from Parliament API with better error handling
       try {
-        const parliamentResponse = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650');
+        const parliamentResponse = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650', {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'GOVWHIZ-App/1.0'
+          }
+        });
+        
         if (parliamentResponse.ok) {
           const parliamentData = await parliamentResponse.json();
           const transformedMPs = parliamentData.items?.map((member: any) => ({
@@ -179,23 +188,26 @@ export function MPSearch() {
             email: `${member.value.nameDisplayAs.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
             phone: '020 7219 3000',
             image: member.value.thumbnailUrl || '/images/mp-placeholder.jpg',
-            postcodes: ['SW1A'],
-            biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`
+            postcodes: [],
+            biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`,
+            website: `https://members.parliament.uk/member/${member.value.id}/contact`,
+            address: 'House of Commons, Westminster, London SW1A 0AA'
           })) || [];
+          
           setMps(transformedMPs);
-          console.log('Loaded MPs from Parliament API');
+          console.log(`Loaded ${transformedMPs.length} MPs from Parliament API fallback`);
         } else {
-          throw new Error('Parliament API failed');
+          throw new Error(`Parliament API failed with status: ${parliamentResponse.status}`);
         }
       } catch (parliamentError) {
         console.error('Parliament API also failed:', parliamentError);
-        // Final fallback: Use minimal mock data
+        // Final fallback: Provide helpful error message
         setMps([]);
-        setError('Unable to load MP data. Please try again later.');
+        setError('Unable to load MP data from Parliament API. Please check your internet connection and try again later.');
       }
     } catch (err) {
       console.error('Error loading MPs:', err);
-      setError('Failed to load MP data');
+      setError('Failed to load MP data. Please try again.');
     }
   };
 
@@ -222,25 +234,82 @@ export function MPSearch() {
     );
   };
 
+  // Enhanced postcode search using the new hook
+  const { fetchData: fetchMPData, data: mpCouncilData, error: mpCouncilError, loading: mpCouncilLoading } = useMPandCouncil();
+
   const searchByPostcode = async (postcode: string): Promise<MP[]> => {
     try {
-      // Use postcodes.io API for live postcode lookup
-      const normalizedPostcode = postcode.replace(/\s/g, '').toUpperCase();
-      const response = await fetch(`https://api.postcodes.io/postcodes/${normalizedPostcode}`);
+      // Clean postcode
+      const normalizedPostcode = postcode.replace(/\s+/g, '').toUpperCase();
       
-      if (response.ok) {
-        const data = await response.json();
-        const constituency = data.result?.parliamentary_constituency;
+      // Try the enhanced MP lookup first
+      try {
+        await fetchMPData(normalizedPostcode);
         
-        if (constituency) {
-          return mps.filter(mp => 
+        // If successful, convert the result to our MP format
+        if (mpCouncilData && mpCouncilData.mp) {
+          const enhancedMP: MP = {
+            id: mpCouncilData.mp.person_id || mpCouncilData.mp.mp_id || `mp-${Date.now()}`,
+            name: mpCouncilData.mp.full_name,
+            party: mpCouncilData.mp.party,
+            constituency: mpCouncilData.mp.constituency,
+            email: `${mpCouncilData.mp.full_name.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
+            phone: '020 7219 3000',
+            image: `/images/mp-placeholder.jpg`,
+            isActive: true,
+            website: `https://members.parliament.uk/member/${mpCouncilData.mp.person_id}/contact`,
+            address: 'House of Commons, Westminster, London SW1A 0AA',
+            biography: `${mpCouncilData.mp.full_name} is the ${mpCouncilData.mp.party} MP for ${mpCouncilData.mp.constituency}.`,
+            postcodes: [normalizedPostcode]
+          };
+          
+          return [enhancedMP];
+        }
+      } catch (enhancedError) {
+        console.warn('Enhanced MP lookup failed, falling back to standard approach:', enhancedError);
+      }
+      
+      // Fallback to original approach
+      // 1. Validate postcode & get district using Postcodes.io
+      const pcResponse = await fetch(`https://api.postcodes.io/postcodes/${normalizedPostcode}`);
+      const pcJson = await pcResponse.json();
+      
+      if (!pcJson.result) {
+        throw new Error('Invalid postcode');
+      }
+      
+      const constituency = pcJson.result.parliamentary_constituency;
+      const adminDistrict = pcJson.result.admin_district;
+      
+      // 2. Enhanced constituency matching with loaded MPs
+      if (constituency) {
+        // First try exact constituency match from loaded MPs
+        let foundMPs = mps.filter(mp => 
+          mp.constituency.toLowerCase() === constituency.toLowerCase()
+        );
+        
+        // If no exact match, try partial match
+        if (foundMPs.length === 0) {
+          foundMPs = mps.filter(mp => 
             mp.constituency.toLowerCase().includes(constituency.toLowerCase()) ||
             constituency.toLowerCase().includes(mp.constituency.toLowerCase())
           );
         }
+        
+        // If still no match, try to find by admin district
+        if (foundMPs.length === 0 && adminDistrict) {
+          foundMPs = mps.filter(mp => 
+            mp.constituency.toLowerCase().includes(adminDistrict.toLowerCase()) ||
+            adminDistrict.toLowerCase().includes(mp.constituency.toLowerCase())
+          );
+        }
+        
+        if (foundMPs.length > 0) {
+          return foundMPs;
+        }
       }
       
-      // Fallback: search by postcode area
+      // Final fallback: search by postcode area
       const postcodeArea = normalizedPostcode.match(/^([A-Z]{1,2})/)?.[1];
       if (postcodeArea) {
         return mps.filter(mp => 
@@ -287,7 +356,12 @@ export function MPSearch() {
       setSearchResults(results);
       
       if (results.length === 0) {
-        setError('No MPs found for your search. Please try a different postcode or search term.');
+        // Enhanced error message with suggestions
+        if (/^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i.test(searchQuery)) {
+          setError('No MPs found for this postcode. Please check the postcode is correct (e.g., SW1A 1AA) or try searching by constituency name.');
+        } else {
+          setError('No MPs found for your search. Try searching by:\n• Full postcode (e.g., SW1A 1AA)\n• Constituency name (e.g., Westminster)\n• MP name (e.g., John Smith)\n• Political party (e.g., Conservative)');
+        }
       }
     } catch (err) {
       console.error('Search error:', err);

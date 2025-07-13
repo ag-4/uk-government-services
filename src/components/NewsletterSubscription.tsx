@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Calendar, Bell, Shield, Check, AlertCircle, User, MapPin, Phone } from 'lucide-react';
+import { subscribeToNewsletter, trackAction } from '../services/database';
 
 interface SubscriptionData {
   name: string;
@@ -91,18 +92,16 @@ export function NewsletterSubscription() {
     setSubmitStatus('idle');
 
     try {
-      // Simulate API call - In real implementation, this would send to your backend
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Use the database service to store subscription
+      const subscriptionRecord = await subscribeToNewsletter(formData);
       
-      // Store subscription data locally for demo purposes
-      const subscriptionRecord = {
-        ...formData,
-        subscribedAt: new Date().toISOString(),
-        id: `sub_${Date.now()}`,
-        status: 'active'
-      };
-      
-      localStorage.setItem('newsletter_subscription', JSON.stringify(subscriptionRecord));
+      // Track the subscription action
+       await trackAction('newsletter_subscription', {
+         userId: subscriptionRecord.id,
+         subscriptionTypes: formData.subscriptionTypes,
+         frequency: formData.frequency,
+         interests: formData.interests
+       });
       
       setSubmitStatus('success');
     } catch (error) {

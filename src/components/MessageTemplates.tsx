@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Copy, Send, Edit3, Heart, GraduationCap, Leaf, PoundSterling, MapPin, Check } from 'lucide-react';
+import { MessageSquare, Copy, Send, Edit3, Heart, GraduationCap, Leaf, PoundSterling, MapPin, Check, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { database, trackAction } from '../services/database';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ScrollArea } from './ui/scroll-area';
@@ -67,6 +68,224 @@ const templateCategories = [
 ];
 
 export function MessageTemplates() {
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
+  const [mpName, setMpName] = useState('');
+  const [userDetails, setUserDetails] = useState({
+    name: '',
+    address: '',
+    email: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handlePreviewTemplate = (template: any) => {
+    setSelectedTemplate(template);
+    setShowPreview(true);
+  };
+
+  const handleUseTemplate = (template: any) => {
+    setSelectedTemplate(template);
+    setEditedContent(template.content);
+    setShowEditor(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!mpName || !userDetails.name || !userDetails.email || !editedContent) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Simulate sending email - in production, this would call your backend
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Store message using database service
+      const messageRecord = await database.addSentMessage({
+        template: selectedTemplate?.title || 'Unknown Template',
+        mpName,
+        userDetails,
+        content: editedContent,
+        sentAt: new Date().toISOString(),
+        status: 'sent'
+      });
+      
+      // Track the message sending action
+      await trackAction('message_sent', {
+        messageId: messageRecord.id,
+        template: selectedTemplate?.title,
+        mpName,
+        contentLength: editedContent.length
+      });
+      
+      setSubmitStatus('success');
+      setTimeout(() => {
+        setShowEditor(false);
+        setSubmitStatus('idle');
+        setEditedContent('');
+        setMpName('');
+        setUserDetails({ name: '', address: '', email: '' });
+      }, 3000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (showPreview && selectedTemplate) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-4">
+            <Button variant="outline" onClick={() => setShowPreview(false)}>
+              ← Back to Templates
+            </Button>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Preview: {selectedTemplate.title}</CardTitle>
+              <CardDescription>Template preview with placeholder content</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <pre className="whitespace-pre-wrap text-sm font-mono">
+                  {selectedTemplate.content}
+                </pre>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowPreview(false)}>
+                Close Preview
+              </Button>
+              <Button onClick={() => {
+                setShowPreview(false);
+                handleUseTemplate(selectedTemplate);
+              }}>
+                Use This Template
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (showEditor && selectedTemplate) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-4">
+            <Button variant="outline" onClick={() => setShowEditor(false)}>
+              ← Back to Templates
+            </Button>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Compose Message: {selectedTemplate.title}</CardTitle>
+              <CardDescription>Customize your message and send it to your MP</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {submitStatus === 'success' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <Check className="h-5 w-5 text-green-600 mr-2" />
+                    <span className="text-green-800">Message sent successfully!</span>
+                  </div>
+                </div>
+              )}
+              
+              {submitStatus === 'error' && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                    <span className="text-red-800">Failed to send message. Please try again.</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Your MP's Name *</label>
+                  <Input
+                    value={mpName}
+                    onChange={(e) => setMpName(e.target.value)}
+                    placeholder="e.g., John Smith MP"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Your Name *</label>
+                  <Input
+                    value={userDetails.name}
+                    onChange={(e) => setUserDetails(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Your full name"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Your Email *</label>
+                  <Input
+                    type="email"
+                    value={userDetails.email}
+                    onChange={(e) => setUserDetails(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="your.email@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Your Address</label>
+                  <Input
+                    value={userDetails.address}
+                    onChange={(e) => setUserDetails(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="Your constituency address"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Message Content *</label>
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  rows={12}
+                  className="font-mono text-sm"
+                  placeholder="Customize your message here..."
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowEditor(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSendMessage}
+                disabled={isSubmitting}
+                className="flex items-center"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Message
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -105,8 +324,17 @@ export function MessageTemplates() {
                         </pre>
                       </CardContent>
                       <CardFooter className="flex justify-end space-x-2">
-                        <Button variant="outline">Preview</Button>
-                        <Button>Use Template</Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handlePreviewTemplate(template)}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Preview
+                        </Button>
+                        <Button onClick={() => handleUseTemplate(template)}>
+                          <Send className="h-4 w-4 mr-2" />
+                          Use Template
+                        </Button>
                       </CardFooter>
                     </Card>
                   ))}

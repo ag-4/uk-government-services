@@ -98,23 +98,83 @@ export default function NewsSection() {
       }
       setStatus({ type: 'loading', message: 'Fetching latest UK news...' });
       
-      // First try to fetch from existing news.json
-      const response = await fetch('/data/news.json');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let newsData = [];
+      
+      // Try to fetch from multiple real news sources
+      try {
+        // Attempt to fetch from NewsAPI (requires API key in production)
+        const newsApiKey = process.env.REACT_APP_NEWS_API_KEY;
+        if (newsApiKey) {
+          const newsApiResponse = await fetch(
+            `https://newsapi.org/v2/everything?q=UK+government+OR+parliament+OR+politics&language=en&sortBy=publishedAt&pageSize=20&apiKey=${newsApiKey}`
+          );
+          
+          if (newsApiResponse.ok) {
+            const newsApiData = await newsApiResponse.json();
+            if (newsApiData.articles) {
+              newsData = newsApiData.articles.map((article: any, index: number) => ({
+                id: `newsapi_${Date.now()}_${index}`,
+                title: article.title,
+                summary: article.description || article.content?.substring(0, 200) + '...',
+                category: 'UK Politics',
+                source: article.source.name,
+                timestamp: article.publishedAt,
+                publishedAt: article.publishedAt,
+                content: article.content || article.description,
+                url: article.url,
+                image: article.urlToImage
+              }));
+            }
+          }
+        }
+        
+        // If no real news data, try BBC RSS (would need CORS proxy in production)
+        if (newsData.length === 0) {
+          try {
+            const rssResponse = await fetch('https://feeds.bbci.co.uk/news/politics/rss.xml');
+            if (rssResponse.ok) {
+              const rssText = await rssResponse.text();
+              // Parse RSS would require XML parser - simplified for demo
+              console.log('RSS data available but requires XML parsing');
+            }
+          } catch (rssError) {
+            console.warn('RSS feed unavailable:', rssError);
+          }
+        }
+        
+      } catch (apiError) {
+        console.warn('External news APIs unavailable:', apiError);
       }
       
-      let data = await response.json();
+      // Fallback: Try local news.json file
+      if (newsData.length === 0) {
+        try {
+          const response = await fetch('/data/news.json');
+          if (response.ok) {
+            newsData = await response.json();
+          }
+        } catch (localError) {
+          console.warn('Local news.json unavailable:', localError);
+        }
+      }
       
-      // Enhance with mock live news data
-      const mockNews = generateMockNews();
-      data = [...mockNews, ...data].slice(0, 12); // Combine and limit to 12 items
+      // Final fallback: Use enhanced mock data
+      if (newsData.length === 0) {
+        const mockNews = generateMockNews();
+        newsData = mockNews;
+        console.log('Using mock news data as fallback');
+      }
       
-      setNews(data);
-      setFilteredNews(data);
+      // Limit to 12 items and sort by date
+      newsData = newsData.slice(0, 12).sort((a: any, b: any) => 
+        new Date(b.publishedAt || b.timestamp).getTime() - new Date(a.publishedAt || a.timestamp).getTime()
+      );
+      
+      setNews(newsData);
+      setFilteredNews(newsData);
       setLastUpdated(new Date());
       setError(null);
-      setStatus({ type: 'success', message: `Successfully loaded ${data.length} news articles` });
+      setStatus({ type: 'success', message: `Successfully loaded ${newsData.length} news articles` });
       
       // Hide status after 3 seconds
       setTimeout(() => {
@@ -125,6 +185,11 @@ export default function NewsSection() {
       console.error('Error fetching news:', error);
       setError('Failed to load news. Please try again later.');
       setStatus({ type: 'error', message: 'Failed to fetch news. Please try again.' });
+      
+      // Even on error, show mock data
+      const mockNews = generateMockNews();
+      setNews(mockNews);
+      setFilteredNews(mockNews);
     } finally {
       setLoading(false);
       setIsRefreshing(false);

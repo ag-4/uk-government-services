@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
+import { bookmarkItem, unbookmarkItem, database, trackAction } from '../services/database';
 
 // Define the MP interface to match our data structure
 interface MP {
@@ -76,11 +77,8 @@ export function MPSearch() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Load bookmarked MPs from localStorage
-    const savedBookmarks = localStorage.getItem('bookmarked-mps');
-    if (savedBookmarks) {
-      setBookmarkedMPs(new Set(JSON.parse(savedBookmarks)));
-    }
+    // Load bookmarked MPs from database
+    loadBookmarkedMPs();
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -98,11 +96,85 @@ export function MPSearch() {
     }
   }, [selectedMPId, mps]);
 
+  const loadBookmarkedMPs = async () => {
+    try {
+      const bookmarks = await database.getBookmarks();
+      const mpBookmarks = bookmarks.filter(b => b.type === 'mp').map(b => b.itemId);
+      setBookmarkedMPs(new Set(mpBookmarks));
+    } catch (error) {
+      console.error('Error loading bookmarked MPs:', error);
+    }
+  };
+
+  const handleBookmarkMP = async (mp: MP) => {
+    try {
+      if (bookmarkedMPs.has(mp.id)) {
+        // Remove bookmark
+        const bookmarks = await database.getBookmarks();
+        const bookmark = bookmarks.find(b => b.type === 'mp' && b.itemId === mp.id);
+        if (bookmark) {
+          await unbookmarkItem(bookmark.id);
+          setBookmarkedMPs(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(mp.id);
+            return newSet;
+          });
+          await trackAction('mp_unbookmarked', { mpId: mp.id, mpName: mp.name });
+        }
+      } else {
+        // Add bookmark
+        await bookmarkItem('mp', mp.id, mp.name, `${mp.party} MP for ${mp.constituency}`);
+        setBookmarkedMPs(prev => new Set([...prev, mp.id]));
+        await trackAction('mp_bookmarked', { mpId: mp.id, mpName: mp.name });
+      }
+    } catch (error) {
+      console.error('Error toggling MP bookmark:', error);
+    }
+  };
+
   const loadMPs = async () => {
     try {
+      // Try to fetch from real UK Parliament API first
+      try {
+        const response = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650');
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.items && data.items.length > 0) {
+            // Transform Parliament API data to our MP interface
+            const transformedMPs = data.items.map((member: any) => ({
+              id: member.value.id.toString(),
+              name: member.value.nameDisplayAs,
+              party: member.value.latestParty?.name || 'Unknown',
+              constituency: member.value.latestHouseMembership?.membershipFrom || 'Unknown',
+              email: '', // Not provided by this endpoint
+              phone: '', // Not provided by this endpoint
+              image: member.value.thumbnailUrl,
+              isActive: true,
+              fullTitle: member.value.nameFullTitle,
+              website: '',
+              address: ''
+            }));
+            
+            setMps(transformedMPs);
+            console.log('Successfully loaded MPs from Parliament API');
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.warn('Parliament API unavailable, falling back to local data:', apiError);
+      }
+      
+      // Fallback to local JSON file
       const response = await fetch('/data/mps.json');
-      const data = await response.json();
-      setMps(data);
+      if (response.ok) {
+        const data = await response.json();
+        setMps(data);
+        console.log('Loaded MPs from local data');
+      } else {
+        throw new Error('Failed to load local MP data');
+      }
     } catch (err) {
       console.error('Error loading MPs:', err);
       setError('Failed to load MP data');
@@ -217,18 +289,7 @@ export function MPSearch() {
     setImageErrors(prev => new Set(prev).add(mpId));
   };
 
-  const toggleBookmark = useCallback((mpId: string) => {
-    setBookmarkedMPs(prev => {
-      const newBookmarks = new Set(prev);
-      if (newBookmarks.has(mpId)) {
-        newBookmarks.delete(mpId);
-      } else {
-        newBookmarks.add(mpId);
-      }
-      localStorage.setItem('bookmarked-mps', JSON.stringify([...newBookmarks]));
-      return newBookmarks;
-    });
-  }, []);
+
 
   const paginatedResults = useMemo(() => {
     const startIndex = (currentPage - 1) * resultsPerPage;
@@ -286,7 +347,7 @@ export function MPSearch() {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                toggleBookmark(mp.id);
+                handleBookmarkMP(mp);
               }}
               aria-label={bookmarkedMPs.has(mp.id) ? `Remove ${mp.name} from bookmarks` : `Add ${mp.name} to bookmarks`}
               className="opacity-0 group-hover:opacity-100 transition-opacity"

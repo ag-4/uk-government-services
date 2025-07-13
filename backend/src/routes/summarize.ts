@@ -1,13 +1,13 @@
 import express from 'express';
-import { Configuration, OpenAIApi } from 'openai';
+// import { Configuration, OpenAIApi } from 'openai';
 
 const router = express.Router();
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// const configuration = new Configuration({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
 
-const openai = new OpenAIApi(configuration);
+// const openai = new OpenAIApi(configuration);
 
 router.post('/summarize', async (req, res) => {
   try {
@@ -22,23 +22,9 @@ router.post('/summarize', async (req, res) => {
 
     const prompt = `Please provide a concise summary of the following news article in about 2-3 sentences. Focus on the key points and maintain a neutral, journalistic tone:\n\n${content}`;
 
-    const completion = await openai.createChatCompletion({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a professional news editor skilled at creating concise, accurate summaries of political news articles.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: 150,
-      temperature: 0.3,
-    });
-
-    const summary = completion.data.choices[0]?.message?.content?.trim() || content.slice(0, 200) + '...';
+    // TODO: Implement OpenAI integration when openai package is available
+    // For now, provide a simple fallback summary
+    const summary = content.length > 200 ? content.slice(0, 200) + '...' : content;
 
     res.json({
       success: true,

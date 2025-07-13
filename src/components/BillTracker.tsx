@@ -216,19 +216,36 @@ const BillTracker: React.FC = () => {
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // In production, this would be:
-      // const response = await fetch('https://bills.parliament.uk/api/v1/Bills');
-      // const data: BillsResponse = await response.json();
-      // setBills(data.items);
-
+      // Try to fetch from real Parliament API first
+      try {
+        const response = await fetch('https://bills.parliament.uk/api/v1/Bills?take=50&skip=0');
+        
+        if (!response.ok) {
+          throw new Error(`API responded with status: ${response.status}`);
+        }
+        
+        const data: BillsResponse = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          setBills(data.items);
+          setLastRefresh(new Date());
+          console.log('Successfully fetched bills from Parliament API');
+          return;
+        }
+      } catch (apiError) {
+        console.warn('Parliament API unavailable, falling back to mock data:', apiError);
+      }
+      
+      // Fallback to mock data if API fails
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setBills(mockBills);
       setLastRefresh(new Date());
+      
     } catch (error) {
       console.error('Error fetching bills:', error);
       setError('Failed to fetch bills data. Please try again.');
+      // Even on error, show mock data as fallback
+      setBills(mockBills);
     } finally {
       setLoading(false);
     }

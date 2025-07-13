@@ -36,6 +36,34 @@
 - **📱 Real-time Search:** Instant results as you type
 - **🌐 Offline Support:** Cached data for offline browsing
 
+### 🏛️ **Local Council Lookup**
+- **📍 Postcode-based Search:** Find your local authority by postcode
+- **🏢 Council Information:** Contact details, websites, and services
+- **🗺️ Service Directory:** Planning, housing, council tax, and more
+- **📞 Quick Actions:** Direct contact buttons and service links
+- **💾 Local Caching:** Fast offline access to council data
+
+### 📜 **Parliamentary Bill Tracker**
+- **🔍 Real-time Bill Monitoring:** Track legislation through Parliament
+- **📊 Status Filtering:** Proposed, In Progress, Enacted bills
+- **🏛️ Chamber Tracking:** House of Commons and Lords progress
+- **🔄 Auto-refresh:** Daily updates from Parliament API
+- **📱 Mobile Optimized:** Full bill details on any device
+
+### 🗺️ **Interactive Constituency Map**
+- **🎯 Visual Constituency Browser:** Interactive UK map with hover details
+- **🔍 Advanced Filtering:** By party, region, and MP information
+- **📊 Political Statistics:** Real-time party distribution data
+- **🖱️ Interactive Controls:** Click, zoom, and explore constituencies
+- **📱 Touch-friendly:** Optimized for mobile and tablet use
+
+### 🤖 **AI Bill Explainer**
+- **💬 Chat Interface:** Ask questions about parliamentary bills
+- **📝 Plain English:** Complex legislation explained simply
+- **🔍 Bill Suggestions:** Quick access to current bills
+- **💾 Conversation History:** Save and review explanations
+- **🎯 Smart Responses:** Context-aware AI assistance
+
 ### 📰 **Live Government News Hub**
 - **🤖 AI-Powered Aggregation:** Smart news categorization
 - **🏷️ Category Filtering:** Parliament, New Laws, Proposed Laws
@@ -166,6 +194,48 @@ VITE_APP_VERSION=1.0.0
 - **🔍 Real-time Search:** Instant results with debouncing
 - **📱 Mobile Optimized:** Touch-friendly interface
 - **♿ Screen Reader Support:** Full accessibility
+
+## 🔧 New Module Implementation
+
+### **Local Council Lookup Module**
+```typescript
+// Component: LocalCouncilLookup.tsx
+// Features: Postcode-based council search with service directory
+// Data Source: Mock local authority database
+// UI: Card-based layout with quick action buttons
+```
+
+### **Parliamentary Bill Tracker**
+```typescript
+// Component: BillTracker.tsx
+// API Integration: https://bills.parliament.uk/api/v1/
+// Features: Status filtering, chamber tracking, auto-refresh
+// UI: List view with expandable bill details
+```
+
+### **Interactive Constituency Map**
+```typescript
+// Component: ConstituencyMapView.tsx
+// Technology: SVG-based interactive map with D3.js-style interactions
+// Features: Hover details, click zoom, party filtering
+// Performance: Optimized rendering with lazy loading
+```
+
+### **AI Bill Explainer**
+```typescript
+// Component: AIExplainBill.tsx
+// AI Integration: Simulated OpenAI/Claude API responses
+// Features: Chat interface, bill suggestions, conversation history
+// UI: Modern chat-like interface with copy functionality
+```
+
+### **Enhanced Navigation System**
+```typescript
+// Updated: App.tsx with new navigation pills
+// Features: Smooth scrolling, active state management
+// Accessibility: ARIA labels, keyboard navigation
+// Mobile: Touch-friendly navigation with overflow handling
+```
 
 ## 🛠️ Available Scripts
 

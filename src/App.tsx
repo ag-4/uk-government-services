@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Crown, Users, FileText, MessageSquare, Vote, Phone, AlertCircle, Mail } from 'lucide-react';
+import { Menu, X, Crown, Users, FileText, MessageSquare, Vote, Phone, AlertCircle, Mail, Building2, MapPin, Bot } from 'lucide-react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import NewsSection from './components/NewsSection';
@@ -11,6 +11,10 @@ import { Footer } from './components/Footer';
 import CitizenRights from './components/CitizenRights';
 import VotingInfo from './components/VotingInfo';
 import CallToAction from './components/CallToAction';
+import LocalCouncilLookup from './components/LocalCouncilLookup';
+import BillTracker from './components/BillTracker';
+import ConstituencyMapView from './components/ConstituencyMapView';
+import AIExplainBill from './components/AIExplainBill';
 import ErrorBoundaryNew from './components/EnhancedErrorBoundary';
 import './App.css';
 
@@ -55,6 +59,18 @@ function AppContent() {
             <NavPill onClick={() => scrollToSection('mp-search')} active={activeSection === 'mp-search'} icon={Users}>
               Find Your MP
             </NavPill>
+            <NavPill onClick={() => scrollToSection('council-lookup')} active={activeSection === 'council-lookup'} icon={Building2}>
+              Local Council
+            </NavPill>
+            <NavPill onClick={() => scrollToSection('bill-tracker')} active={activeSection === 'bill-tracker'} icon={FileText}>
+              Bill Tracker
+            </NavPill>
+            <NavPill onClick={() => scrollToSection('constituency-map')} active={activeSection === 'constituency-map'} icon={MapPin}>
+              Constituency Map
+            </NavPill>
+            <NavPill onClick={() => scrollToSection('ai-explain')} active={activeSection === 'ai-explain'} icon={Bot}>
+              AI Bill Explainer
+            </NavPill>
             <NavPill onClick={() => scrollToSection('templates')} active={activeSection === 'templates'} icon={MessageSquare}>
               Contact Templates
             </NavPill>
@@ -86,6 +102,30 @@ function AppContent() {
       <div id="mp-search" className="scroll-mt-32">
         <ErrorBoundaryNew>
           <MPSearch />
+        </ErrorBoundaryNew>
+      </div>
+      
+      <div id="council-lookup" className="scroll-mt-32">
+        <ErrorBoundaryNew>
+          <LocalCouncilLookup />
+        </ErrorBoundaryNew>
+      </div>
+      
+      <div id="bill-tracker" className="scroll-mt-32">
+        <ErrorBoundaryNew>
+          <BillTracker />
+        </ErrorBoundaryNew>
+      </div>
+      
+      <div id="constituency-map" className="scroll-mt-32">
+        <ErrorBoundaryNew>
+          <ConstituencyMapView />
+        </ErrorBoundaryNew>
+      </div>
+      
+      <div id="ai-explain" className="scroll-mt-32">
+        <ErrorBoundaryNew>
+          <AIExplainBill />
         </ErrorBoundaryNew>
       </div>
       

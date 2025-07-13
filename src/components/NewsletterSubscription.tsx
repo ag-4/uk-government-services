@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Mail, Calendar, Bell, Shield, Check, AlertCircle, User, MapPin, Phone } from 'lucide-react';
-import { subscribeToNewsletter, trackAction } from '../services/database';
 
 interface SubscriptionData {
   name: string;
@@ -92,16 +91,30 @@ export function NewsletterSubscription() {
     setSubmitStatus('idle');
 
     try {
-      // Use the database service to store subscription
-      const subscriptionRecord = await subscribeToNewsletter(formData);
-      
-      // Track the subscription action
-       await trackAction('newsletter_subscription', {
-         userId: subscriptionRecord.id,
-         subscriptionTypes: formData.subscriptionTypes,
-         frequency: formData.frequency,
-         interests: formData.interests
-       });
+      // Use Formspree for newsletter subscription
+      const response = await fetch('https://formspree.io/f/xpzvgrkw', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          address: formData.address,
+          phone: formData.phone,
+          subscriptionTypes: formData.subscriptionTypes,
+          interests: formData.interests.join(', '),
+          frequency: formData.frequency,
+          dataConsent: formData.dataConsent,
+          marketingConsent: formData.marketingConsent,
+          subscribedAt: new Date().toISOString(),
+          _subject: 'New Newsletter Subscription - UK Government Services'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit subscription');
+      }
       
       setSubmitStatus('success');
     } catch (error) {

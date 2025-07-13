@@ -53,137 +53,95 @@ const ConstituencyMapView: React.FC = () => {
   });
   const [mapDimensions, setMapDimensions] = useState({ width: 800, height: 600 });
 
-  // Mock constituency data - in production, this would come from GeoJSON and MP data APIs
-  const mockConstituencies: Constituency[] = [
-    {
-      id: 'birmingham-ladywood',
-      name: 'Birmingham Ladywood',
-      mp: {
-        name: 'Shabana Mahmood',
-        party: 'Labour',
-        partyColor: '#E4003B',
-        email: 'shabana.mahmood.mp@parliament.uk',
-        majority: 28582,
-        firstElected: '2010'
-      },
-      region: 'England',
-      population: 73635,
-      area: 23.4,
-      coordinates: { lat: 52.4862, lng: -1.9090 }
-    },
-    {
-      id: 'cities-of-london-and-westminster',
-      name: 'Cities of London and Westminster',
-      mp: {
-        name: 'Nickie Aiken',
-        party: 'Conservative',
-        partyColor: '#0087DC',
-        email: 'nickie.aiken.mp@parliament.uk',
-        majority: 3953,
-        firstElected: '2019'
-      },
-      region: 'England',
-      population: 68573,
-      area: 12.8,
-      coordinates: { lat: 51.5074, lng: -0.1278 }
-    },
-    {
-      id: 'manchester-central',
-      name: 'Manchester Central',
-      mp: {
-        name: 'Lucy Powell',
-        party: 'Labour',
-        partyColor: '#E4003B',
-        email: 'lucy.powell.mp@parliament.uk',
-        majority: 31445,
-        firstElected: '2012'
-      },
-      region: 'England',
-      population: 89129,
-      area: 31.2,
-      coordinates: { lat: 53.4808, lng: -2.2426 }
-    },
-    {
-      id: 'edinburgh-south',
-      name: 'Edinburgh South',
-      mp: {
-        name: 'Ian Murray',
-        party: 'Labour',
-        partyColor: '#E4003B',
-        email: 'ian.murray.mp@parliament.uk',
-        majority: 11095,
-        firstElected: '2010'
-      },
-      region: 'Scotland',
-      population: 67200,
-      area: 42.1,
-      coordinates: { lat: 55.9533, lng: -3.1883 }
-    },
-    {
-      id: 'glasgow-central',
-      name: 'Glasgow Central',
-      mp: {
-        name: 'Alison Thewliss',
-        party: 'SNP',
-        partyColor: '#FDF83D',
-        email: 'alison.thewliss.mp@parliament.uk',
-        majority: 2267,
-        firstElected: '2015'
-      },
-      region: 'Scotland',
-      population: 61895,
-      area: 18.7,
-      coordinates: { lat: 55.8642, lng: -4.2518 }
-    },
-    {
-      id: 'cardiff-central',
-      name: 'Cardiff Central',
-      mp: {
-        name: 'Jo Stevens',
-        party: 'Labour',
-        partyColor: '#E4003B',
-        email: 'jo.stevens.mp@parliament.uk',
-        majority: 17196,
-        firstElected: '2015'
-      },
-      region: 'Wales',
-      population: 67317,
-      area: 28.9,
-      coordinates: { lat: 51.4816, lng: -3.1791 }
-    },
-    {
-      id: 'bath',
-      name: 'Bath',
-      mp: {
-        name: 'Wera Hobhouse',
-        party: 'Liberal Democrat',
-        partyColor: '#FAA61A',
-        email: 'wera.hobhouse.mp@parliament.uk',
-        majority: 12322,
-        firstElected: '2017'
-      },
-      region: 'England',
-      population: 88859,
-      area: 351.2,
-      coordinates: { lat: 51.3758, lng: -2.3599 }
-    },
-    {
-      id: 'belfast-south',
-      name: 'Belfast South',
-      mp: {
-        name: 'Claire Hanna',
-        party: 'SDLP',
-        partyColor: '#2AA82C',
-        email: 'claire.hanna.mp@parliament.uk',
-        majority: 15401,
-        firstElected: '2019'
-      },
-      region: 'Northern Ireland',
-      population: 67169,
-      area: 44.2,
-      coordinates: { lat: 54.5973, lng: -5.9301 }
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch constituency data from MapIt API
+  const fetchConstituencies = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch UK parliamentary constituencies from MapIt
+      const response = await fetch('https://mapit.mysociety.org/areas/WMC');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch constituency data');
+      }
+      
+      const data = await response.json();
+      
+      // Transform MapIt data to our Constituency interface
+      const transformedConstituencies: Constituency[] = Object.entries(data)
+        .slice(0, 20) // Limit to first 20 for performance
+        .map(([id, area]: [string, any]) => ({
+          id: id,
+          name: area.name || 'Unknown Constituency',
+          mp: {
+            name: 'Contact Parliament for MP details',
+            party: 'Unknown',
+            partyColor: '#6B7280',
+            email: undefined,
+            majority: undefined,
+            firstElected: undefined
+          },
+          region: area.country_name || 'Unknown Region',
+          population: 75000, // Average constituency size
+          area: 50, // Average area
+          coordinates: { 
+            lat: area.centre_lat || 51.5074, 
+            lng: area.centre_lon || -0.1278 
+          },
+          boundaries: {
+            type: 'Polygon',
+            coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]] // Placeholder
+          }
+        }));
+      
+      setConstituencies(transformedConstituencies);
+    } catch (error) {
+      console.error('Error fetching constituencies:', error);
+      setError('Failed to load constituency data. Showing sample data.');
+      
+      // Fallback to sample data
+      const fallbackConstituencies: Constituency[] = [
+        {
+          id: 'cities-of-london-and-westminster',
+          name: 'Cities of London and Westminster',
+          mp: {
+            name: 'Nickie Aiken',
+            party: 'Conservative',
+            partyColor: '#0087DC',
+            email: 'nickie.aiken.mp@parliament.uk',
+            majority: 3953,
+            firstElected: '2019'
+          },
+          region: 'England',
+          population: 68573,
+          area: 12.8,
+          coordinates: { lat: 51.5074, lng: -0.1278 }
+        },
+        {
+          id: 'manchester-central',
+          name: 'Manchester Central',
+          mp: {
+            name: 'Lucy Powell',
+            party: 'Labour',
+            partyColor: '#E4003B',
+            email: 'lucy.powell.mp@parliament.uk',
+            majority: 31445,
+            firstElected: '2012'
+          },
+          region: 'England',
+          population: 89129,
+          area: 31.2,
+          coordinates: { lat: 53.4808, lng: -2.2426 }
+        }
+      ];
+      setConstituencies(fallbackConstituencies);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   // Simplified UK outline for demonstration
   const ukOutline = `
@@ -207,25 +165,7 @@ const ConstituencyMapView: React.FC = () => {
   `;
 
   useEffect(() => {
-    const loadConstituencies = async () => {
-      setLoading(true);
-      try {
-        // Simulate loading delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // In production, this would load GeoJSON data:
-        // const response = await fetch('/api/constituencies.geojson');
-        // const geoData = await response.json();
-        
-        setConstituencies(mockConstituencies);
-      } catch (error) {
-        console.error('Error loading constituency data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadConstituencies();
+    fetchConstituencies();
   }, []);
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Copy, Send, Edit3, Heart, GraduationCap, Leaf, PoundSterling, MapPin, Check, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { database, trackAction } from '../services/database';
+
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ScrollArea } from './ui/scroll-area';
@@ -100,26 +100,28 @@ export function MessageTemplates() {
 
     setIsSubmitting(true);
     try {
-      // Simulate sending email - in production, this would call your backend
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Store message using database service
-      const messageRecord = await database.addSentMessage({
-        template: selectedTemplate?.title || 'Unknown Template',
-        mpName,
-        userDetails,
-        content: editedContent,
-        sentAt: new Date().toISOString(),
-        status: 'sent'
+      // Use Formspree to send message to MP
+      const response = await fetch('https://formspree.io/f/xpzvgrkw', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mpName: mpName,
+          senderName: userDetails.name,
+          senderEmail: userDetails.email,
+          senderAddress: userDetails.address,
+          templateTitle: selectedTemplate?.title,
+          messageContent: editedContent,
+          sentAt: new Date().toISOString(),
+          _subject: `Message to ${mpName} - ${selectedTemplate?.title}`,
+          _replyto: userDetails.email
+        })
       });
-      
-      // Track the message sending action
-      await trackAction('message_sent', {
-        messageId: messageRecord.id,
-        template: selectedTemplate?.title,
-        mpName,
-        contentLength: editedContent.length
-      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
       
       setSubmitStatus('success');
       setTimeout(() => {

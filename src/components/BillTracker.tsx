@@ -60,7 +60,7 @@ type Chamber = 'all' | 'commons' | 'lords';
 
 const BillTracker: React.FC = () => {
   const [bills, setBills] = useState<Bill[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<BillStatus>('all');
@@ -70,20 +70,20 @@ const BillTracker: React.FC = () => {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
-  // Mock data for demonstration - in production, this would come from the Parliament API
+  // Fallback mock data for when API is unavailable
   const mockBills: Bill[] = [
     {
       billId: 1,
-      shortTitle: "Online Safety Bill",
-      longTitle: "A Bill to make provision for and in connection with the regulation by OFCOM of certain internet services; and for connected purposes.",
+      shortTitle: "Digital Markets, Competition and Consumers Bill",
+      longTitle: "A Bill to make provision about digital markets, competition and consumer protection; and for connected purposes.",
       currentStage: {
-        id: 8,
-        description: "Royal Assent",
+        id: 6,
+        description: "Committee Stage",
         house: "Commons",
         stageSittings: []
       },
       originatingHouse: "Commons",
-      lastUpdate: "2023-10-26T00:00:00Z",
+      lastUpdate: "2024-01-15T00:00:00Z",
       billWithdrawn: null,
       isDefeated: false,
       billTypeId: 1,
@@ -93,64 +93,20 @@ const BillTracker: React.FC = () => {
       petitionInformation: null,
       agent: {
         id: 1,
-        name: "Michelle Donelan MP",
-        memberFrom: "Chippenham",
+        name: "Department for Business and Trade",
+        memberFrom: "",
         house: "Commons",
-        party: "Conservative"
+        party: "Government"
       },
-      sponsors: [
-        {
-          member: {
-            value: {
-              id: 1,
-              nameDisplayAs: "Michelle Donelan",
-              party: {
-                name: "Conservative",
-                abbreviation: "Con"
-              }
-            }
-          }
-        }
-      ],
+      sponsors: [],
       promoters: [],
-      summary: "The Online Safety Bill aims to make the UK the safest place in the world to be online while defending free expression. It will require tech companies to take greater responsibility for the safety of their users and tackle illegal content and activity online.",
+      summary: "This Bill aims to strengthen competition in digital markets and enhance consumer protection online.",
       publications: []
     },
     {
       billId: 2,
-      shortTitle: "Levelling-up and Regeneration Bill",
-      longTitle: "A Bill to make provision about town and country planning; to make provision about infrastructure levy and community infrastructure levy; and for connected purposes.",
-      currentStage: {
-        id: 6,
-        description: "Committee Stage",
-        house: "Lords",
-        stageSittings: []
-      },
-      originatingHouse: "Commons",
-      lastUpdate: "2023-09-15T00:00:00Z",
-      billWithdrawn: null,
-      isDefeated: false,
-      billTypeId: 1,
-      introducedSessionId: 1,
-      includePrintedVersions: true,
-      petitioningPeriod: null,
-      petitionInformation: null,
-      agent: {
-        id: 2,
-        name: "Michael Gove MP",
-        memberFrom: "Surrey Heath",
-        house: "Commons",
-        party: "Conservative"
-      },
-      sponsors: [],
-      promoters: [],
-      summary: "The Levelling-up and Regeneration Bill will reform the planning system to give communities a stronger voice in local development, while making it easier and faster to build the homes and infrastructure that communities need.",
-      publications: []
-    },
-    {
-      billId: 3,
-      shortTitle: "Data Protection and Digital Information Bill",
-      longTitle: "A Bill to make provision about the processing of personal data; to make provision about electronic communications; and for connected purposes.",
+      shortTitle: "Renters (Reform) Bill",
+      longTitle: "A Bill to make provision about residential tenancies in England; and for connected purposes.",
       currentStage: {
         id: 3,
         description: "Second Reading",
@@ -158,7 +114,7 @@ const BillTracker: React.FC = () => {
         stageSittings: []
       },
       originatingHouse: "Commons",
-      lastUpdate: "2023-08-20T00:00:00Z",
+      lastUpdate: "2024-01-12T00:00:00Z",
       billWithdrawn: null,
       isDefeated: false,
       billTypeId: 1,
@@ -167,46 +123,15 @@ const BillTracker: React.FC = () => {
       petitioningPeriod: null,
       petitionInformation: null,
       agent: {
-        id: 3,
-        name: "John Whittingdale MP",
-        memberFrom: "Maldon",
-        house: "Commons",
-        party: "Conservative"
-      },
-      sponsors: [],
-      promoters: [],
-      summary: "This Bill will reform the UK's data protection regime to reduce burdens on businesses while maintaining high data protection standards. It will also reform electronic communications regulations.",
-      publications: []
-    },
-    {
-      billId: 4,
-      shortTitle: "Tobacco and Vapes Bill",
-      longTitle: "A Bill to make provision about the sale of tobacco and vaping products; and for connected purposes.",
-      currentStage: {
         id: 2,
-        description: "First Reading",
+        name: "Department for Levelling Up, Housing and Communities",
+        memberFrom: "",
         house: "Commons",
-        stageSittings: []
-      },
-      originatingHouse: "Commons",
-      lastUpdate: "2024-01-10T00:00:00Z",
-      billWithdrawn: null,
-      isDefeated: false,
-      billTypeId: 1,
-      introducedSessionId: 1,
-      includePrintedVersions: true,
-      petitioningPeriod: null,
-      petitionInformation: null,
-      agent: {
-        id: 4,
-        name: "Victoria Atkins MP",
-        memberFrom: "Louth and Horncastle",
-        house: "Commons",
-        party: "Conservative"
+        party: "Government"
       },
       sponsors: [],
       promoters: [],
-      summary: "The Tobacco and Vapes Bill will create a smokefree generation by preventing anyone born on or after 1 January 2009 from ever legally being sold tobacco products.",
+      summary: "This Bill seeks to reform the private rental sector to provide greater security for tenants.",
       publications: []
     }
   ];
@@ -216,40 +141,34 @@ const BillTracker: React.FC = () => {
     setError(null);
 
     try {
-      // Try to fetch from real Parliament API first
-      try {
-        const response = await fetch('https://bills.parliament.uk/api/v1/Bills?take=50&skip=0');
-        
-        if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`);
-        }
-        
-        const data: BillsResponse = await response.json();
-        
-        if (data.items && data.items.length > 0) {
-          setBills(data.items);
-          setLastRefresh(new Date());
-          console.log('Successfully fetched bills from Parliament API');
-          return;
-        }
-      } catch (apiError) {
-        console.warn('Parliament API unavailable, falling back to mock data:', apiError);
+      // Fetch from UK Parliament Bills API
+      const response = await fetch('https://bills-api.parliament.uk/api/v1/Bills?CurrentHouse=Commons&Skip=0&Take=20');
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
       }
       
-      // Fallback to mock data if API fails
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setBills(mockBills);
-      setLastRefresh(new Date());
+      const data: BillsResponse = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        setBills(data.items);
+        setLastRefresh(new Date());
+        console.log('Successfully fetched bills from Parliament API');
+      } else {
+        throw new Error('No bills data received from API');
+      }
       
     } catch (error) {
       console.error('Error fetching bills:', error);
-      setError('Failed to fetch bills data. Please try again.');
-      // Even on error, show mock data as fallback
+      setError('Failed to fetch bills data from Parliament API. Showing fallback data.');
+      
+      // Fallback to mock data if API fails
       setBills(mockBills);
+      setLastRefresh(new Date());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mockBills]);
 
   useEffect(() => {
     fetchBills();
@@ -645,7 +564,7 @@ const BillTracker: React.FC = () => {
                           {/* Actions */}
                           <div className="flex items-center space-x-4 pt-2">
                             <a
-                              href={`https://bills.parliament.uk/bills/${bill.billId}`}
+                              href={`https://bills-api.parliament.uk/bills/${bill.billId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors"

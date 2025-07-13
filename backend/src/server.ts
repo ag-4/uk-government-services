@@ -107,6 +107,8 @@ process.on('SIGTERM', () => {
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
+  console.log(`📊 Health check: http://localhost:${port}/health`);
+  console.log(`🔗 API Base: http://localhost:${port}/api`);
   if (process.env.NODE_ENV === 'production') {
     console.log(`📊 Health check: https://uk-government-services.vercel.app/api/health`);
     console.log(`🔗 API Base: https://uk-government-services.vercel.app/api`);

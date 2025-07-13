@@ -126,6 +126,7 @@ catch {
     Read-Host "Press Enter to exit"
     exit 1
 }
+}
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green

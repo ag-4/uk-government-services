@@ -35,9 +35,9 @@ app.use(morgan('combined'));
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-domain.com', 'https://www.your-domain.com']
-    : ['http://localhost:5173', 'http://localhost:3000'],
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://uk-government-services.vercel.app', 'https://your-production-domain.com']
+    : true, // Allow all origins in development
   credentials: true
 }));
 
@@ -107,6 +107,11 @@ process.on('SIGTERM', () => {
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
-  console.log(`📊 Health check: http://localhost:${port}/health`);
-  console.log(`🔗 API Base: http://localhost:${port}/api`);
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`📊 Health check: https://uk-government-services.vercel.app/api/health`);
+    console.log(`🔗 API Base: https://uk-government-services.vercel.app/api`);
+  } else {
+    console.log(`📊 Health check: http://localhost:${port}/health`);
+    console.log(`🔗 API Base: http://localhost:${port}/api`);
+  }
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 
 // API Configuration
-const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || '/api';
 
 // Types
 export interface MP {
@@ -149,26 +149,51 @@ export const apiService = new ApiService();
 export const fallbackData = {
   mps: async (): Promise<MP[]> => {
     try {
-      const response = await fetch('/data/mps.json');
-      const rawMPs = await response.json();
-      
-      // Transform the data to ensure compatibility
-      return rawMPs.map((mp: any) => ({
-        ...mp,
-        // Ensure legacy fields are available for compatibility
-        postcode: mp.postcodes?.[0] || mp.postcode || '',
-        fullPostcodes: mp.postcodes || mp.fullPostcodes || [],
-        address: mp.addresses?.[0]?.fullAddress || mp.address || 'Parliament House, Westminster, London',
-        image: mp.thumbnailUrl || mp.image || '/images/mp-placeholder.jpg',
-        // Ensure all required fields have defaults
-        committees: mp.committees || [],
-        experience: mp.experience || [],
-        socialMedia: mp.socialMedia || {},
-        addresses: mp.addresses || [],
-        constituencyPostcodes: mp.constituencyPostcodes || [],
-        membershipEndDate: mp.membershipEndDate || null,
-        partyColor: mp.partyColor?.startsWith('#') ? mp.partyColor : `#${mp.partyColor || '666666'}`,
-      }));
+      // Fetch directly from Parliament API as fallback
+      const response = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650');
+      if (response.ok) {
+        const data = await response.json();
+        return data.items?.map((member: any) => ({
+          id: `MP${member.value.id}`,
+          parliamentId: member.value.id,
+          name: member.value.nameDisplayAs,
+          displayName: member.value.nameDisplayAs,
+          fullTitle: member.value.nameFullTitle,
+          constituency: member.value.latestHouseMembership?.membershipFrom || 'Unknown',
+          party: member.value.latestParty?.name || 'Unknown',
+          partyAbbreviation: member.value.latestParty?.abbreviation || '',
+          partyColor: member.value.latestParty?.name === 'Conservative' ? '#0087dc' :
+                     member.value.latestParty?.name === 'Labour' ? '#d50000' :
+                     member.value.latestParty?.name === 'Liberal Democrat' ? '#faa61a' :
+                     member.value.latestParty?.name === 'Green' ? '#6ab023' :
+                     member.value.latestParty?.name?.includes('SNP') ? '#fff95d' : '#666666',
+          gender: member.value.gender,
+          membershipStartDate: member.value.latestHouseMembership?.membershipStartDate || '',
+          membershipEndDate: member.value.latestHouseMembership?.membershipEndDate || null,
+          isActive: true,
+          email: `${member.value.nameDisplayAs.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
+          phone: '020 7219 3000',
+          website: '',
+          image: member.value.thumbnailUrl || '/images/mp-placeholder.jpg',
+          thumbnailUrl: member.value.thumbnailUrl || '/images/mp-placeholder.jpg',
+          postcodes: ['SW1A'],
+          biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`,
+          addresses: [{
+            type: 'Parliamentary',
+            fullAddress: 'House of Commons, Westminster, London SW1A 0AA',
+            postcode: 'SW1A 0AA',
+            line1: 'House of Commons',
+            line2: 'Westminster',
+            town: 'London',
+            county: 'Greater London',
+            country: 'UK'
+          }],
+          committees: [],
+          socialMedia: {},
+          constituencyPostcodes: []
+        })) || [];
+      }
+      return [];
     } catch (error) {
       console.error('Failed to load fallback MP data:', error);
       return [];
@@ -177,8 +202,22 @@ export const fallbackData = {
 
   news: async (): Promise<NewsArticle[]> => {
     try {
-      const response = await fetch('/data/news.json');
-      return await response.json();
+      // Fetch live news from BBC RSS feed via rss2json
+      const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/news/politics/rss.xml');
+      if (response.ok) {
+        const data = await response.json();
+        return data.items?.map((item: any) => ({
+          id: item.guid || item.link,
+          title: item.title,
+          summary: item.description?.replace(/<[^>]*>/g, '') || '',
+          content: item.description?.replace(/<[^>]*>/g, '') || '',
+          url: item.link,
+          publishedAt: item.pubDate,
+          source: 'BBC News',
+          category: 'Politics'
+        })) || [];
+      }
+      return [];
     } catch (error) {
       console.error('Failed to load fallback news data:', error);
       return [];

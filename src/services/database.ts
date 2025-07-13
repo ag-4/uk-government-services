@@ -44,7 +44,7 @@ export interface SentMessage {
 class DatabaseService {
   private isInitialized = false;
   private useRealDatabase = false;
-  private baseUrl = 'http://localhost:3001/api/database';
+  private baseUrl = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/database` : '/api/database';
 
   async initialize() {
     if (this.isInitialized) return;

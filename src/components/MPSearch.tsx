@@ -166,14 +166,32 @@ export function MPSearch() {
         console.warn('Parliament API unavailable, falling back to local data:', apiError);
       }
       
-      // Fallback to local JSON file
-      const response = await fetch('/data/mps.json');
-      if (response.ok) {
-        const data = await response.json();
-        setMps(data);
-        console.log('Loaded MPs from local data');
-      } else {
-        throw new Error('Failed to load local MP data');
+      // Fallback: Try to fetch from Parliament API directly
+      try {
+        const parliamentResponse = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650');
+        if (parliamentResponse.ok) {
+          const parliamentData = await parliamentResponse.json();
+          const transformedMPs = parliamentData.items?.map((member: any) => ({
+            id: `MP${member.value.id}`,
+            name: member.value.nameDisplayAs,
+            constituency: member.value.latestHouseMembership?.membershipFrom || 'Unknown',
+            party: member.value.latestParty?.name || 'Unknown',
+            email: `${member.value.nameDisplayAs.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
+            phone: '020 7219 3000',
+            image: member.value.thumbnailUrl || '/images/mp-placeholder.jpg',
+            postcodes: ['SW1A'],
+            biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`
+          })) || [];
+          setMps(transformedMPs);
+          console.log('Loaded MPs from Parliament API');
+        } else {
+          throw new Error('Parliament API failed');
+        }
+      } catch (parliamentError) {
+        console.error('Parliament API also failed:', parliamentError);
+        // Final fallback: Use minimal mock data
+        setMps([]);
+        setError('Unable to load MP data. Please try again later.');
       }
     } catch (err) {
       console.error('Error loading MPs:', err);
@@ -206,19 +224,29 @@ export function MPSearch() {
 
   const searchByPostcode = async (postcode: string): Promise<MP[]> => {
     try {
-      // Load postcode to constituency mapping
-      const response = await fetch('/data/postcode-to-constituency.json');
-      const postcodeMapping = await response.json();
-      
-      // Normalize postcode (remove spaces, uppercase)
+      // Use postcodes.io API for live postcode lookup
       const normalizedPostcode = postcode.replace(/\s/g, '').toUpperCase();
+      const response = await fetch(`https://api.postcodes.io/postcodes/${normalizedPostcode}`);
       
-      // Extract postcode area (first part before digits)
+      if (response.ok) {
+        const data = await response.json();
+        const constituency = data.result?.parliamentary_constituency;
+        
+        if (constituency) {
+          return mps.filter(mp => 
+            mp.constituency.toLowerCase().includes(constituency.toLowerCase()) ||
+            constituency.toLowerCase().includes(mp.constituency.toLowerCase())
+          );
+        }
+      }
+      
+      // Fallback: search by postcode area
       const postcodeArea = normalizedPostcode.match(/^([A-Z]{1,2})/)?.[1];
-      
-      if (postcodeArea && postcodeMapping[postcodeArea]) {
-        const constituency = postcodeMapping[postcodeArea];
-        return mps.filter(mp => mp.constituency === constituency);
+      if (postcodeArea) {
+        return mps.filter(mp => 
+          mp.postcodes?.some(p => p.startsWith(postcodeArea)) ||
+          mp.constituency.toLowerCase().includes(postcodeArea.toLowerCase())
+        );
       }
       
       return [];
@@ -230,17 +258,13 @@ export function MPSearch() {
 
   const searchByPostcodeArea = async (area: string): Promise<MP[]> => {
     try {
-      const response = await fetch('/data/postcode-to-constituency.json');
-      const postcodeMapping = await response.json();
-      
       const normalizedArea = area.toUpperCase();
       
-      if (postcodeMapping[normalizedArea]) {
-        const constituency = postcodeMapping[normalizedArea];
-        return mps.filter(mp => mp.constituency === constituency);
-      }
-      
-      return [];
+      // Search MPs by postcode area pattern
+      return mps.filter(mp => 
+        mp.postcodes?.some(p => p.startsWith(normalizedArea)) ||
+        mp.constituency.toLowerCase().includes(normalizedArea.toLowerCase())
+      );
     } catch (err) {
       console.error('Error searching by postcode area:', err);
       return [];

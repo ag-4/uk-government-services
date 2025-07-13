@@ -56,8 +56,59 @@ export default function CitizenRights() {
 
   const fetchCitizenRights = async () => {
     try {
-      const response = await fetch('/data/citizen-rights.json');
-      const fetchedData = await response.json();
+      // Create citizen rights data programmatically instead of relying on local files
+    const fetchedData = {
+      rights: [
+        {
+          title: 'Right to Vote',
+          description: 'Every eligible citizen has the right to vote in elections and referendums',
+          category: 'Democratic Rights'
+        },
+        {
+          title: 'Freedom of Speech',
+          description: 'The right to express opinions and ideas without government interference',
+          category: 'Civil Liberties'
+        },
+        {
+          title: 'Right to Healthcare',
+          description: 'Access to free healthcare through the National Health Service (NHS)',
+          category: 'Social Rights'
+        },
+        {
+          title: 'Right to Education',
+          description: 'Free education for children and access to further education opportunities',
+          category: 'Social Rights'
+        },
+        {
+          title: 'Right to Fair Trial',
+          description: 'The right to a fair and public hearing by an independent tribunal',
+          category: 'Legal Rights'
+        },
+        {
+          title: 'Freedom of Movement',
+          description: 'The right to move freely within the UK and travel abroad',
+          category: 'Civil Liberties'
+        }
+      ],
+      responsibilities: [
+        {
+          title: 'Obey the Law',
+          description: 'All citizens must follow UK laws and regulations'
+        },
+        {
+          title: 'Pay Taxes',
+          description: 'Contribute to public services through taxation'
+        },
+        {
+          title: 'Jury Service',
+          description: 'Serve on juries when called upon by the courts'
+        },
+        {
+          title: 'Respect Others',
+          description: 'Treat all people with dignity and respect regardless of background'
+        }
+      ]
+    };
       setData(fetchedData);
     } catch (error) {
       console.error('Error fetching citizen rights:', error);

@@ -146,15 +146,27 @@ export default function NewsSection() {
         console.warn('External news APIs unavailable:', apiError);
       }
       
-      // Fallback: Try local news.json file
+      // Fallback: Try BBC News RSS feed
       if (newsData.length === 0) {
         try {
-          const response = await fetch('/data/news.json');
-          if (response.ok) {
-            newsData = await response.json();
+          const rssResponse = await fetch('https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/news/politics/rss.xml');
+          if (rssResponse.ok) {
+            const rssData = await rssResponse.json();
+            newsData = rssData.items?.slice(0, 12).map((item: any, index: number) => ({
+              id: `news_${Date.now()}_${index}`,
+              title: item.title,
+              summary: item.description?.replace(/<[^>]*>/g, '').substring(0, 200) + '...',
+              content: item.description?.replace(/<[^>]*>/g, ''),
+              category: 'Politics',
+              publishedAt: item.pubDate,
+              timestamp: item.pubDate,
+              source: 'BBC News',
+              url: item.link,
+              image: item.thumbnail || '/images/government-building.jpg'
+            })) || [];
           }
-        } catch (localError) {
-          console.warn('Local news.json unavailable:', localError);
+        } catch (rssError) {
+          console.warn('RSS feed unavailable:', rssError);
         }
       }
       

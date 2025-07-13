@@ -46,16 +46,44 @@ interface MP {
   };
 }
 
-// Load MPs from local JSON file
-function loadMPsFromFile(): MP[] {
-  try {
-    const filePath = path.join(__dirname, '../../../public/data/mps.json');
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading MPs from file:', error);
-    return [];
-  }
+// Generate fallback MP data programmatically
+function generateFallbackMPs(): MP[] {
+  return [
+    {
+      id: 'MP1',
+      parliamentId: 1,
+      name: 'Sample MP',
+      displayName: 'Sample MP',
+      fullTitle: 'The Rt Hon Sample MP',
+      constituency: 'Sample Constituency',
+      party: 'Conservative',
+      partyAbbreviation: 'Con',
+      partyColor: '0087dc',
+      gender: 'M',
+      membershipStartDate: '2019-12-12',
+      membershipEndDate: null,
+      isActive: true,
+      email: 'sample.mp@parliament.uk',
+      phone: '020 7219 3000',
+      website: '',
+      image: '/images/mp-placeholder.jpg',
+      thumbnailUrl: '/images/mp-placeholder.jpg',
+      postcodes: ['SW1A'],
+      biography: 'Sample MP is the Conservative MP for Sample Constituency.',
+      addresses: [{
+        type: 'Parliamentary',
+        fullAddress: 'House of Commons, Westminster, London SW1A 0AA',
+        postcode: 'SW1A 0AA',
+        line1: 'House of Commons',
+        line2: 'Westminster',
+        town: 'London',
+        county: 'Greater London',
+        country: 'UK'
+      }],
+      committees: [],
+      socialMedia: {}
+    }
+  ];
 }
 
 // Fetch MPs from Parliament API
@@ -142,10 +170,10 @@ async function getMPs(): Promise<MP[]> {
     // Try Parliament API first
     mps = await fetchMPsFromParliamentAPI();
     
-    // If API fails, use local file
+    // If API fails, use programmatic fallback data
     if (mps.length === 0) {
-      console.log('Parliament API unavailable, using local MP data');
-      mps = loadMPsFromFile();
+      console.log('Parliament API unavailable, using fallback MP data');
+      mps = generateFallbackMPs();
     }
     
     // Cache for 1 hour

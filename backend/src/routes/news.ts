@@ -22,16 +22,35 @@ interface NewsArticle {
   department?: string;
 }
 
-// Load news from local JSON file
-function loadNewsFromFile(): NewsArticle[] {
-  try {
-    const filePath = path.join(__dirname, '../../../public/data/news.json');
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading news from file:', error);
-    return [];
-  }
+// Generate fallback news data programmatically
+function generateFallbackNews(): NewsArticle[] {
+  const currentDate = new Date().toISOString();
+  return [
+    {
+      id: 'fallback-1',
+      title: 'Government Services Update',
+      summary: 'Latest updates on government digital services and citizen engagement platforms.',
+      content: 'The government continues to improve digital services for citizens across the UK.',
+      publishedAt: currentDate,
+      source: 'Gov.uk',
+      category: 'Digital Services',
+      url: 'https://www.gov.uk/government/news',
+      tags: ['digital', 'services', 'government'],
+      department: 'Cabinet Office'
+    },
+    {
+      id: 'fallback-2',
+      title: 'Parliamentary Updates',
+      summary: 'Recent parliamentary proceedings and legislative updates.',
+      content: 'Parliament continues its work on important legislation affecting citizens.',
+      publishedAt: currentDate,
+      source: 'Parliament.uk',
+      category: 'Parliament',
+      url: 'https://www.parliament.uk/business/news/',
+      tags: ['parliament', 'legislation', 'updates'],
+      department: 'Parliament'
+    }
+  ];
 }
 
 // Fetch news from Gov.uk RSS feeds
@@ -211,10 +230,10 @@ async function getNews(): Promise<NewsArticle[]> {
     // Try Gov.uk RSS feeds first
     news = await fetchNewsFromGovUK();
     
-    // If RSS fails, use local file
+    // If RSS fails, use programmatic fallback data
     if (news.length === 0) {
-      console.log('Gov.uk RSS feeds unavailable, using local news data');
-      news = loadNewsFromFile();
+      console.log('Gov.uk RSS feeds unavailable, using fallback news data');
+      news = generateFallbackNews();
     }
     
     // Cache for 30 minutes

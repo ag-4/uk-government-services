@@ -52,11 +52,103 @@ export default function VotingInfo() {
 
   const fetchVotingInfo = async () => {
     try {
-      const response = await fetch('/data/voting-info.json');
-      const fetchedData = await response.json();
-      setData(fetchedData);
+      // Create voting info data programmatically instead of relying on local files
+      const votingInfoData = {
+        registration: {
+          eligibility: [
+            'British, Irish, or qualifying Commonwealth citizen',
+            'At least 18 years old on polling day',
+            'Resident at an address in the UK',
+            'Not legally excluded from voting'
+          ],
+          steps: [
+            {
+              title: 'Check if you\'re already registered',
+              description: 'Contact your local Electoral Registration Office or check online',
+              timeRequired: '5 minutes',
+              difficulty: 'Easy'
+            },
+            {
+              title: 'Register online at gov.uk',
+              description: 'Complete the online registration form with your details',
+              timeRequired: '5-10 minutes',
+              difficulty: 'Easy'
+            },
+            {
+              title: 'Provide required information',
+              description: 'National Insurance number, date of birth, and address details',
+              timeRequired: '2 minutes',
+              difficulty: 'Easy'
+            }
+          ],
+          deadlines: {
+            general_election: '12 working days before polling day',
+            local_election: '12 working days before polling day',
+            european_election: '12 working days before polling day'
+          }
+        },
+        voting_process: {
+          methods: [
+            {
+              type: 'In Person',
+              title: 'Vote at your polling station',
+              description: 'Visit your designated polling station on election day',
+              requirements: ['Valid photo ID', 'Polling card (recommended)'],
+              timeframe: '7am to 10pm on polling day'
+            },
+            {
+              type: 'By Post',
+              title: 'Postal vote',
+              description: 'Apply for a postal vote and vote by mail',
+              requirements: ['Postal vote application', 'Valid signature'],
+              timeframe: 'Apply by 5pm, 11 working days before election'
+            },
+            {
+              type: 'By Proxy',
+              title: 'Proxy vote',
+              description: 'Appoint someone to vote on your behalf',
+              requirements: ['Proxy vote application', 'Valid reason'],
+              timeframe: 'Apply by 5pm, 6 working days before election'
+            }
+          ]
+        },
+        elections: {
+          types: [
+            {
+              name: 'General Election',
+              description: 'Elect MPs to the House of Commons',
+              frequency: 'Every 5 years (maximum)',
+              scope: 'National'
+            },
+            {
+              name: 'Local Elections',
+              description: 'Elect local councillors',
+              frequency: 'Every 4 years',
+              scope: 'Local authority areas'
+            },
+            {
+              name: 'Mayoral Elections',
+              description: 'Elect mayors in certain areas',
+              frequency: 'Every 4 years',
+              scope: 'Metropolitan areas with mayors'
+            },
+            {
+              name: 'Police and Crime Commissioner',
+              description: 'Elect Police and Crime Commissioners',
+              frequency: 'Every 4 years',
+              scope: 'Police force areas'
+            }
+          ]
+        },
+        important_dates: {
+          next_general_election: 'By January 2025',
+          local_elections_2024: 'May 2024',
+          voter_registration_deadline: '12 working days before each election'
+        }
+      };
+      setData(votingInfoData);
     } catch (error) {
-      console.error('Error fetching voting info:', error);
+      console.error('Error creating voting info:', error);
     }
   };
 

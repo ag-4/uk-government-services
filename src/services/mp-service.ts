@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 interface MP {
   id: string;
@@ -53,18 +53,64 @@ export class MPService {
 
       // Try to load from backend API first
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-        const response = await axios.get(`${apiUrl}/api/mps`);
-        this.mps = response.data;
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const response = await axios.get(`${apiUrl}/mps`);
+        this.mps = response.data.data || response.data;
       } catch (apiError) {
-        console.warn('Failed to load MPs from API, falling back to local data:', apiError);
+        console.warn('Failed to load MPs from backend API, trying Parliament API directly:', apiError);
 
-        // Fallback to local data file
-        const response = await fetch('/data/mps.json');
-        if (!response.ok) {
-          throw new Error(`Failed to load MP data: ${response.statusText}`);
+        // Fallback to Parliament API directly
+        try {
+          const response = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650');
+          if (response.ok) {
+            const data = await response.json();
+            this.mps = data.items?.map((member: any) => ({
+              id: `MP${member.value.id}`,
+              parliamentId: member.value.id,
+              name: member.value.nameDisplayAs,
+              displayName: member.value.nameDisplayAs,
+              fullTitle: member.value.nameFullTitle,
+              constituency: member.value.latestHouseMembership?.membershipFrom || 'Unknown',
+              party: member.value.latestParty?.name || 'Unknown',
+              partyAbbreviation: member.value.latestParty?.abbreviation || '',
+              partyColor: member.value.latestParty?.name === 'Conservative' ? '#0087dc' :
+                         member.value.latestParty?.name === 'Labour' ? '#d50000' :
+                         member.value.latestParty?.name === 'Liberal Democrat' ? '#faa61a' :
+                         member.value.latestParty?.name === 'Green' ? '#6ab023' :
+                         member.value.latestParty?.name?.includes('SNP') ? '#fff95d' : '#666666',
+              gender: member.value.gender,
+              membershipStartDate: member.value.latestHouseMembership?.membershipStartDate || '',
+              membershipEndDate: member.value.latestHouseMembership?.membershipEndDate || null,
+              isActive: true,
+              email: `${member.value.nameDisplayAs.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
+              phone: '020 7219 3000',
+              website: '',
+              image: member.value.thumbnailUrl || '/images/mp-placeholder.jpg',
+              thumbnailUrl: member.value.thumbnailUrl || '/images/mp-placeholder.jpg',
+              postcodes: ['SW1A'],
+              biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`,
+              addresses: [{
+                type: 'Parliamentary',
+                fullAddress: 'House of Commons, Westminster, London SW1A 0AA',
+                postcode: 'SW1A 0AA',
+                line1: 'House of Commons',
+                line2: 'Westminster',
+                town: 'London',
+                county: 'Greater London',
+                country: 'UK'
+              }],
+              committees: [],
+              socialMedia: {},
+              constituencyPostcodes: []
+            })) || [];
+          } else {
+            throw new Error('Parliament API failed');
+          }
+        } catch (parliamentError) {
+          console.error('Failed to load from Parliament API:', parliamentError);
+          // Final fallback to minimal data
+          this.mps = [];
         }
-        this.mps = await response.json();
       }
 
       this.loaded = true;

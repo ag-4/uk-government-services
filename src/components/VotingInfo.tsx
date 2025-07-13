@@ -55,6 +55,8 @@ export default function VotingInfo() {
       // Create voting info data programmatically instead of relying on local files
       const votingInfoData = {
         registration: {
+          title: 'Voter Registration',
+          description: 'Register to vote to participate in UK elections and make your voice heard in democracy.',
           eligibility: [
             'British, Irish, or qualifying Commonwealth citizen',
             'At least 18 years old on polling day',
@@ -88,6 +90,8 @@ export default function VotingInfo() {
           }
         },
         voting_process: {
+          title: 'How to Vote',
+          description: 'Learn about the different ways you can cast your vote in UK elections.',
           methods: [
             {
               type: 'In Person',

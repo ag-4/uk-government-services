@@ -60,34 +60,46 @@ export default function CitizenRights() {
     const fetchedData = {
       rights: [
         {
+          id: '1',
           title: 'Right to Vote',
           description: 'Every eligible citizen has the right to vote in elections and referendums',
-          category: 'Democratic Rights'
+          category: 'Democratic Rights',
+          details: ['Must be 18 or over', 'Must be registered to vote', 'Applies to general, local, and European elections']
         },
         {
+          id: '2',
           title: 'Freedom of Speech',
           description: 'The right to express opinions and ideas without government interference',
-          category: 'Civil Liberties'
+          category: 'Civil Liberties',
+          details: ['Protected under Article 10 of ECHR', 'Subject to certain legal limitations', 'Includes freedom of press and media']
         },
         {
+          id: '3',
           title: 'Right to Healthcare',
           description: 'Access to free healthcare through the National Health Service (NHS)',
-          category: 'Social Rights'
+          category: 'Social Rights',
+          details: ['Free at point of use', 'Emergency treatment guaranteed', 'Prescription charges may apply']
         },
         {
+          id: '4',
           title: 'Right to Education',
           description: 'Free education for children and access to further education opportunities',
-          category: 'Social Rights'
+          category: 'Social Rights',
+          details: ['Compulsory education ages 5-16', 'Free state education available', 'Special educational needs support']
         },
         {
+          id: '5',
           title: 'Right to Fair Trial',
           description: 'The right to a fair and public hearing by an independent tribunal',
-          category: 'Legal Rights'
+          category: 'Legal Rights',
+          details: ['Presumption of innocence', 'Right to legal representation', 'Right to appeal']
         },
         {
+          id: '6',
           title: 'Freedom of Movement',
           description: 'The right to move freely within the UK and travel abroad',
-          category: 'Civil Liberties'
+          category: 'Civil Liberties',
+          details: ['No internal passport required', 'Right to leave and return to UK', 'Subject to immigration controls']
         }
       ],
       responsibilities: [

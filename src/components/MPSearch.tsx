@@ -26,6 +26,7 @@ interface MP {
   address?: string;
   website?: string;
   socialMedia?: any;
+  biography?: string;
 }
 
 const partyColors: { [key: string]: string } = {

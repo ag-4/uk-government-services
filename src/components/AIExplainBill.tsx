@@ -96,9 +96,8 @@ const AIExplainBill: React.FC = () => {
 
   const generateAIResponse = async (request: ExplanationRequest): Promise<string> => {
     try {
-      // Check if puter is available
-      if (typeof window !== 'undefined' && (window as any).puter) {
-        const prompt = `Please explain the "${request.billTitle}" in simple, easy-to-understand terms. Include:
+      // Use HuggingFace API for AI explanations
+      const prompt = `Please explain the "${request.billTitle}" in simple, easy-to-understand terms. Include:
 
 1. **Main Goals**: What the bill aims to achieve
 2. **Key Changes**: Specific changes it would make
@@ -107,16 +106,48 @@ const AIExplainBill: React.FC = () => {
 5. **Timeline**: Current status and when it might take effect
 
 Please format your response with clear headings and bullet points for easy reading. Focus on making complex legal language accessible to everyday citizens.`;
-        
+      
+      // Try HuggingFace API first
+      const hfResponse = await fetch('https://huggingface.co/spaces/AG-TEAM/GOVWHIZ', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_length: 1000,
+            temperature: 0.7,
+            do_sample: true
+          }
+        })
+      });
+      
+      if (hfResponse.ok) {
+        const hfData = await hfResponse.json();
+        if (hfData && hfData.length > 0 && hfData[0].generated_text) {
+          return hfData[0].generated_text;
+        }
+      }
+      
+      // Fallback to puter.ai if available
+      if (typeof window !== 'undefined' && (window as any).puter) {
         const response = await (window as any).puter.ai.chat(prompt, { model: "gpt-4o-mini" });
         return response;
-      } else {
-        throw new Error('Puter.js not available');
       }
+      
+      throw new Error('No AI service available');
+      
     } catch (error) {
       console.error('Error generating AI response:', error);
-      // Fallback to a generic helpful message
+      
+      // Enhanced fallback with bill-specific information
+      const billInfo = await getBillInformation(request.billTitle);
+      
       return `I'd be happy to explain the "${request.billTitle}" in simple terms! 
+
+**Bill Overview:**
+${billInfo}
 
 **To provide you with the most accurate explanation, I recommend:**
 
@@ -133,6 +164,25 @@ Please format your response with clear headings and bullet points for easy readi
 
 Please try again, and I'll do my best to provide a comprehensive explanation!`;
     }
+  };
+  
+  const getBillInformation = async (billTitle: string): Promise<string> => {
+    try {
+      // Try to get bill information from Parliamentary API
+      const response = await fetch(`https://bills-api.parliament.uk/api/v1/Bills?SearchTerm=${encodeURIComponent(billTitle)}&take=1`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.items && data.items.length > 0) {
+          const bill = data.items[0];
+          return `**${bill.shortTitle || bill.longTitle}**\n\n• **Current Stage**: ${bill.currentStage?.description || 'Unknown'}\n• **Bill Type**: ${bill.billType?.name || 'Unknown'}\n• **Introduced**: ${bill.introducedDate ? new Date(bill.introducedDate).toLocaleDateString() : 'Unknown'}\n• **Sponsor**: ${bill.sponsor || 'Unknown'}`;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching bill information:', error);
+    }
+    
+    return 'This appears to be a UK Parliamentary bill. For the most current and detailed information, please visit the official Parliament website.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

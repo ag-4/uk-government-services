@@ -88,38 +88,76 @@ Format as JSON array with fields: title, summary, stage, sponsor, type, currentH
       let billsData: Bill[] = [];
       
       try {
-        // Try to fetch from API service first
-        billsData = await apiService.getCurrentBills({ limit: 20 });
+        // First try the real Parliamentary Bills API
+        const billsApiUrl = 'https://bills-api.parliament.uk/api/v1/Bills';
+        const response = await fetch(`${billsApiUrl}?take=20&skip=0`);
         
-        if (billsData && billsData.length > 0) {
-          console.log(`Successfully fetched ${billsData.length} bills from API service`);
-        } else {
-          throw new Error('No bills data received from API service');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.items && data.items.length > 0) {
+            billsData = data.items.map((item: any) => ({
+              id: `bill-${item.billId}`,
+              billId: item.billId.toString(),
+              title: item.shortTitle || item.longTitle,
+              longTitle: item.longTitle,
+              summary: item.summary || item.longTitle,
+              description: item.summary || item.longTitle,
+              status: item.currentStage?.description || 'Unknown',
+              stage: item.currentStage?.description || 'Unknown',
+              currentHouse: item.currentStage?.house || 'House of Commons',
+              house: item.currentStage?.house || 'House of Commons',
+              introducedDate: item.introducedDate,
+              lastUpdated: item.lastUpdate,
+              lastUpdate: item.lastUpdate,
+              sponsor: item.sponsor?.name || item.promoter?.name || 'Unknown',
+              promoter: item.promoter?.name || 'Unknown',
+              type: item.billType?.name || 'Government Bill',
+              category: 'Parliamentary Bill',
+              url: `https://bills.parliament.uk/bills/${item.billId}`,
+              parliamentUrl: `https://bills.parliament.uk/bills/${item.billId}`,
+              sessions: item.sessions || []
+            }));
+            console.log(`Successfully fetched ${billsData.length} bills from Parliamentary API`);
+          }
         }
       } catch (apiError) {
-        console.warn('API service failed, trying AI-enhanced bills:', apiError);
-        
+        console.warn('Parliamentary Bills API failed, trying fallback:', apiError);
+      }
+      
+      // If Parliamentary API failed, try our API service
+      if (billsData.length === 0) {
         try {
-          // Use AI-enhanced bill generation as primary fallback
+          billsData = await apiService.getCurrentBills({ limit: 20 });
+          if (billsData && billsData.length > 0) {
+            console.log(`Successfully fetched ${billsData.length} bills from API service`);
+          }
+        } catch (apiError) {
+          console.warn('API service failed, trying AI-enhanced bills:', apiError);
+        }
+      }
+      
+      // If still no data, try AI enhancement
+      if (billsData.length === 0) {
+        try {
           billsData = await generateAIEnhancedBills();
           if (billsData.length > 0) {
             console.log(`Successfully generated ${billsData.length} AI-enhanced bills`);
-          } else {
-            throw new Error('AI bill generation returned no data');
           }
         } catch (aiError) {
           console.warn('AI bill generation failed, trying fallback data:', aiError);
-          
-          try {
-            // Final fallback to static data
-            const fallbackBills = await fallbackData.bills();
-            billsData = fallbackBills;
-            console.log(`Loaded ${fallbackBills.length} bills from fallback data`);
-          } catch (fallbackError) {
-            console.error('All sources failed:', fallbackError);
-            setError('Failed to fetch bills data from all sources.');
-            billsData = [];
-          }
+        }
+      }
+      
+      // Final fallback to static data
+      if (billsData.length === 0) {
+        try {
+          const fallbackBills = await fallbackData.bills();
+          billsData = fallbackBills;
+          console.log(`Loaded ${fallbackBills.length} bills from fallback data`);
+        } catch (fallbackError) {
+          console.error('All sources failed:', fallbackError);
+          setError('Failed to fetch bills data from all sources.');
+          billsData = [];
         }
       }
       

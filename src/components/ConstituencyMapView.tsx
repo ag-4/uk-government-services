@@ -136,45 +136,116 @@ Format as JSON array with fields: name, mpName, party, region, population, area,
       let constituencyData: Constituency[] = [];
       
       try {
-        // Try to fetch from MapIt API first
-        const response = await fetch('https://mapit.mysociety.org/areas/WMC');
+        // First try ESD toolkit API for comprehensive data
+        const esdApiKey = 'EvjMEsNvxzTYggcnusQAPNgOPtbPlunELGBxWYxn';
+        const esdToken = 'JPhDyftCOFryQswCbfmuwbcQxSLjfGgXbLrnreFt';
         
-        if (response.ok) {
-          const data = await response.json();
+        // Get constituency data from ESD
+        const esdResponse = await fetch(`https://opendata.esd.org.uk/api/organisations?organisationType=parliamentary-constituency&token=${esdToken}&take=20`);
+        
+        if (esdResponse.ok) {
+          const esdData = await esdResponse.json();
           
-          // Transform MapIt data to our Constituency interface
-          constituencyData = Object.entries(data)
-            .slice(0, 12) // Limit for performance
-            .map(([id, area]: [string, any]) => ({
-              id: id,
-              name: area.name || 'Unknown Constituency',
-              mp: {
-                name: 'Contact Parliament for MP details',
-                party: 'Unknown',
-                partyColor: '#6B7280',
-                email: undefined,
-                majority: undefined,
-                firstElected: undefined
-              },
-              region: area.country_name || 'Unknown Region',
-              population: 75000, // Average constituency size
-              area: 50, // Average area
-              coordinates: { 
-                lat: area.centre_lat || 51.5074, 
-                lng: area.centre_lon || -0.1278 
-              },
-              boundaries: {
-                type: 'Polygon' as const,
-                coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]] // Placeholder
-              }
-            }));
-          
-          console.log(`Successfully fetched ${constituencyData.length} constituencies from MapIt API`);
-        } else {
-          throw new Error('MapIt API request failed');
+          if (esdData && esdData.length > 0) {
+            // Transform ESD data and enrich with MP data from our database
+            const mpResponse = await fetch('/data/mps.json');
+            let mpData: any[] = [];
+            
+            if (mpResponse.ok) {
+              mpData = await mpResponse.json();
+            }
+            
+            constituencyData = esdData.slice(0, 12).map((area: any, index: number) => {
+              // Find matching MP from our database
+              const matchingMP = mpData.find(mp => 
+                mp.constituency.toLowerCase().includes(area.name.toLowerCase()) ||
+                area.name.toLowerCase().includes(mp.constituency.toLowerCase())
+              );
+              
+              const partyColors: Record<string, string> = {
+                'Conservative': '#0087DC',
+                'Labour': '#E4003B',
+                'Liberal Democrat': '#FAA61A',
+                'SNP': '#FFF95D',
+                'DUP': '#D46A4C',
+                'Plaid Cymru': '#005B54',
+                'Green': '#6AB023',
+                'Independent': '#6B7280'
+              };
+              
+              return {
+                id: area.identifier || `constituency-${index}`,
+                name: area.name || 'Unknown Constituency',
+                mp: {
+                  name: matchingMP?.displayName || 'Contact Parliament for MP details',
+                  party: matchingMP?.party || 'Unknown',
+                  partyColor: partyColors[matchingMP?.party] || '#6B7280',
+                  email: matchingMP?.email,
+                  phone: matchingMP?.phone,
+                  website: matchingMP?.website,
+                  majority: undefined,
+                  firstElected: matchingMP?.membershipStartDate?.substring(0, 4)
+                },
+                region: area.region || 'Unknown Region',
+                population: area.population || 75000,
+                area: area.area || 50,
+                coordinates: { 
+                  lat: area.latitude || (51.5074 + (Math.random() - 0.5) * 10), 
+                  lng: area.longitude || (-0.1278 + (Math.random() - 0.5) * 10)
+                },
+                boundaries: {
+                  type: 'Polygon' as const,
+                  coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]
+                }
+              };
+            });
+            
+            console.log(`Successfully fetched ${constituencyData.length} constituencies from ESD API`);
+          }
         }
-      } catch (apiError) {
-        console.warn('MapIt API failed, trying AI-enhanced data:', apiError);
+      } catch (esdError) {
+        console.warn('ESD API failed, trying MapIt API:', esdError);
+        
+        try {
+          // Fallback to MapIt API
+          const response = await fetch('https://mapit.mysociety.org/areas/WMC');
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Transform MapIt data to our Constituency interface
+            constituencyData = Object.entries(data)
+              .slice(0, 12) // Limit for performance
+              .map(([id, area]: [string, any]) => ({
+                id: id,
+                name: area.name || 'Unknown Constituency',
+                mp: {
+                  name: 'Contact Parliament for MP details',
+                  party: 'Unknown',
+                  partyColor: '#6B7280',
+                  email: undefined,
+                  majority: undefined,
+                  firstElected: undefined
+                },
+                region: area.country_name || 'Unknown Region',
+                population: 75000, // Average constituency size
+                area: 50, // Average area
+                coordinates: { 
+                  lat: area.centre_lat || 51.5074, 
+                  lng: area.centre_lon || -0.1278 
+                },
+                boundaries: {
+                  type: 'Polygon' as const,
+                  coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]] // Placeholder
+                }
+              }));
+            
+            console.log(`Successfully fetched ${constituencyData.length} constituencies from MapIt API`);
+          } else {
+            throw new Error('MapIt API request failed');
+          }
+        } catch (apiError) {
+          console.warn('MapIt API failed, trying AI-enhanced data:', apiError);
         
         try {
           // Use AI-enhanced constituency generation as primary fallback

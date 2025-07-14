@@ -77,27 +77,48 @@ const LocalCouncilLookup: React.FC = () => {
     setMappingData(null);
 
     try {
-      // Use real postcodes.io API to get postcode data
       const normalizedPostcode = normalizePostcode(searchPostcode);
-      const response = await fetch(`https://api.postcodes.io/postcodes/${normalizedPostcode}`);
       
-      if (!response.ok) {
+      // First get basic postcode data from postcodes.io
+      const postcodeResponse = await fetch(`https://api.postcodes.io/postcodes/${normalizedPostcode}`);
+      
+      if (!postcodeResponse.ok) {
         throw new Error('Postcode not found. Please check your postcode and try again.');
       }
       
-      const data = await response.json();
-      const result = data.result;
+      const postcodeData = await postcodeResponse.json();
+      const postcodeResult = postcodeData.result;
       
-      if (!result) {
+      if (!postcodeResult) {
         throw new Error('No data found for this postcode.');
       }
+
+      // Now get detailed council data from ESD toolkit API
+      const esdApiKey = 'EvjMEsNvxzTYggcnusQAPNgOPtbPlunELGBxWYxn';
+      const esdToken = 'JPhDyftCOFryQswCbfmuwbcQxSLjfGgXbLrnreFt';
       
-      // Extract council information from postcodes.io response
-      const councilName = result.admin_district || result.admin_county || 'Unknown Council';
-      const ward = result.admin_ward || 'Unknown Ward';
-      const constituency = result.parliamentary_constituency || 'Unknown Constituency';
+      // Search for the local authority using ESD API
+      const councilSearchUrl = `https://opendata.esd.org.uk/api/organisations?postcode=${normalizedPostcode}&token=${esdToken}`;
       
-      // Create mapping data from API response
+      let councilDetails = null;
+      try {
+        const councilResponse = await fetch(councilSearchUrl);
+        if (councilResponse.ok) {
+          const councilData = await councilResponse.json();
+          if (councilData && councilData.length > 0) {
+            councilDetails = councilData[0];
+          }
+        }
+      } catch (esdError) {
+        console.warn('ESD API unavailable, using basic data:', esdError);
+      }
+      
+      // Extract council information
+      const councilName = councilDetails?.name || postcodeResult.admin_district || postcodeResult.admin_county || 'Unknown Council';
+      const ward = postcodeResult.admin_ward || 'Unknown Ward';
+      const constituency = postcodeResult.parliamentary_constituency || 'Unknown Constituency';
+      
+      // Create mapping data
       const mappingData: PostcodeCouncilMapping = {
         postcode: normalizedPostcode,
         localAuthority: councilName.toLowerCase().replace(/\s+/g, '-'),
@@ -105,27 +126,27 @@ const LocalCouncilLookup: React.FC = () => {
         constituency: constituency
       };
       
-      // Create council data from API response and known information
+      // Create comprehensive council data
       const councilData: LocalAuthority = {
-        id: councilName.toLowerCase().replace(/\s+/g, '-'),
+        id: councilDetails?.identifier || councilName.toLowerCase().replace(/\s+/g, '-'),
         name: councilName,
-        type: result.admin_district ? 'District Council' : 'County Council',
-        website: `https://www.${councilName.toLowerCase().replace(/\s+/g, '')}.gov.uk`,
-        phone: '0300 123 4567', // Generic council number
-        email: `info@${councilName.toLowerCase().replace(/\s+/g, '')}.gov.uk`,
+        type: councilDetails?.organisationType || (postcodeResult.admin_district ? 'District Council' : 'County Council'),
+        website: councilDetails?.website || `https://www.${councilName.toLowerCase().replace(/[^a-z0-9]/g, '')}.gov.uk`,
+        phone: councilDetails?.phone || '0300 123 4567',
+        email: councilDetails?.email || `info@${councilName.toLowerCase().replace(/[^a-z0-9]/g, '')}.gov.uk`,
         address: {
-          street: 'Council Offices',
-          city: result.admin_district || result.admin_county || 'Unknown',
-          postcode: result.postcode
+          street: councilDetails?.address?.street || 'Council Offices',
+          city: councilDetails?.address?.city || postcodeResult.admin_district || postcodeResult.admin_county || 'Unknown',
+          postcode: councilDetails?.address?.postcode || postcodeResult.postcode
         },
-        services: ['Housing', 'Education', 'Social Care', 'Waste Collection', 'Planning', 'Libraries'],
-        councilLeader: 'Contact council for details',
-        politicalControl: 'Contact council for details',
-        nextElection: '2026-05-07',
-        population: result.population || 0,
+        services: councilDetails?.services || ['Housing', 'Education', 'Social Care', 'Waste Collection', 'Planning', 'Libraries', 'Council Tax', 'Benefits', 'Environmental Health'],
+        councilLeader: councilDetails?.leader || 'Contact council for details',
+        politicalControl: councilDetails?.politicalControl || 'Contact council for details',
+        nextElection: councilDetails?.nextElection || '2026-05-07',
+        population: councilDetails?.population || postcodeResult.population || 0,
         councilTax: {
-          bandD: 1500, // Approximate average
-          year: '2024-25'
+          bandD: councilDetails?.councilTax?.bandD || 1500,
+          year: councilDetails?.councilTax?.year || '2024-25'
         }
       };
       
@@ -135,7 +156,7 @@ const LocalCouncilLookup: React.FC = () => {
       // Add to search history
       setSearchHistory(prev => {
         const updated = [searchPostcode, ...prev.filter(p => p !== searchPostcode)];
-        return updated.slice(0, 5); // Keep only last 5 searches
+        return updated.slice(0, 5);
       });
 
     } catch (error) {

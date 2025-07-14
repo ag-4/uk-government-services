@@ -1,0 +1,76 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+.next
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Scripts and documentation
+scripts/
+*.md
+!README.md
+
+# Development files
+*.cjs
+*.js.map
+upload-to-github.*
+validate-*.cjs
+verify-*.cjs
+fetch-*.cjs
+enhance-*.cjs
+fix-*.cjs
+update-*.cjs
+download-*.cjs
+postcode-*.cjs
+
+# Data files
+*.json
+!package.json
+!package-lock.json
+!components.json
+!tsconfig*.json
+
+# Backend (if not needed for frontend deployment)
+backend/

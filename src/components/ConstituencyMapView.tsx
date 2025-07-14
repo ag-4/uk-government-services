@@ -246,62 +246,63 @@ Format as JSON array with fields: name, mpName, party, region, population, area,
           }
         } catch (apiError) {
           console.warn('MapIt API failed, trying AI-enhanced data:', apiError);
-        
-        try {
-          // Use AI-enhanced constituency generation as primary fallback
-          constituencyData = await generateAIConstituencyData();
-          if (constituencyData.length > 0) {
-            console.log(`Successfully generated ${constituencyData.length} AI-enhanced constituencies`);
-          } else {
-            throw new Error('AI constituency generation returned no data');
-          }
-        } catch (aiError) {
-          console.warn('AI constituency generation failed, using fallback data:', aiError);
           
-          // Final fallback to sample data
-          constituencyData = [
-            {
-              id: 'cities-of-london-and-westminster',
-              name: 'Cities of London and Westminster',
-              mp: {
-                name: 'Nickie Aiken',
-                party: 'Conservative',
-                partyColor: '#0087DC',
-                email: 'nickie.aiken.mp@parliament.uk',
-                majority: 3953,
-                firstElected: '2019'
-              },
-              region: 'England',
-              population: 68573,
-              area: 12.8,
-              coordinates: { lat: 51.5074, lng: -0.1278 },
-              boundaries: {
-                type: 'Polygon' as const,
-                coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]
-              }
-            },
-            {
-              id: 'manchester-central',
-              name: 'Manchester Central',
-              mp: {
-                name: 'Lucy Powell',
-                party: 'Labour',
-                partyColor: '#E4003B',
-                email: 'lucy.powell.mp@parliament.uk',
-                majority: 31445,
-                firstElected: '2012'
-              },
-              region: 'England',
-              population: 89129,
-              area: 31.2,
-              coordinates: { lat: 53.4808, lng: -2.2426 },
-              boundaries: {
-                type: 'Polygon' as const,
-                coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]
-              }
+          try {
+            // Use AI-enhanced constituency generation as primary fallback
+            constituencyData = await generateAIConstituencyData();
+            if (constituencyData.length > 0) {
+              console.log(`Successfully generated ${constituencyData.length} AI-enhanced constituencies`);
+            } else {
+              throw new Error('AI constituency generation returned no data');
             }
-          ];
-          console.log('Using fallback constituency data');
+          } catch (aiError) {
+            console.warn('AI constituency generation failed, using fallback data:', aiError);
+            
+            // Final fallback to sample data
+            constituencyData = [
+              {
+                id: 'cities-of-london-and-westminster',
+                name: 'Cities of London and Westminster',
+                mp: {
+                  name: 'Nickie Aiken',
+                  party: 'Conservative',
+                  partyColor: '#0087DC',
+                  email: 'nickie.aiken.mp@parliament.uk',
+                  majority: 3953,
+                  firstElected: '2019'
+                },
+                region: 'England',
+                population: 68573,
+                area: 12.8,
+                coordinates: { lat: 51.5074, lng: -0.1278 },
+                boundaries: {
+                  type: 'Polygon' as const,
+                  coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]
+                }
+              },
+              {
+                id: 'manchester-central',
+                name: 'Manchester Central',
+                mp: {
+                  name: 'Lucy Powell',
+                  party: 'Labour',
+                  partyColor: '#E4003B',
+                  email: 'lucy.powell.mp@parliament.uk',
+                  majority: 31445,
+                  firstElected: '2012'
+                },
+                region: 'England',
+                population: 89129,
+                area: 31.2,
+                coordinates: { lat: 53.4808, lng: -2.2426 },
+                boundaries: {
+                  type: 'Polygon' as const,
+                  coordinates: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]
+                }
+              }
+            ];
+            console.log('Using fallback constituency data');
+          }
         }
       }
       

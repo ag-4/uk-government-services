@@ -1,7 +1,15 @@
 import React from 'react';
 
+import { staticApiService } from './static-api';
+
 // API Configuration
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || '/api';
+
+// Detect if we're in production/static deployment
+const isStaticDeployment = () => {
+  // Check if we're in production and no backend server is available
+  return (import.meta as any).env.PROD && !((import.meta as any).env.VITE_API_BASE_URL);
+};
 
 // Types
 export interface MP {
@@ -144,10 +152,16 @@ class ApiService {
 
   // MP API Methods
   async getAllMPs(): Promise<MP[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.getAllMPs();
+    }
     return this.fetchWithErrorHandling<MP[]>('/mps');
   }
 
   async getMPById(id: string): Promise<MP> {
+    if (isStaticDeployment()) {
+      return staticApiService.getMPById(id);
+    }
     return this.fetchWithErrorHandling<MP>(`/mps/${id}`);
   }
 
@@ -157,6 +171,9 @@ class ApiService {
     constituency?: string;
     party?: string;
   }): Promise<MP[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.searchMPs(params);
+    }
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value) searchParams.append(key, value);
@@ -166,14 +183,23 @@ class ApiService {
   }
 
   async getMPByPostcode(postcode: string): Promise<MP[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.getMPByPostcode(postcode);
+    }
     return this.fetchWithErrorHandling<MP[]>(`/mps?postcode=${encodeURIComponent(postcode)}`);
   }
 
   async validatePostcode(postcode: string): Promise<{valid: boolean; constituency?: string}> {
+    if (isStaticDeployment()) {
+      return staticApiService.validatePostcode(postcode);
+    }
     return this.fetchWithErrorHandling<{valid: boolean; constituency?: string}>(`/mps/validate-postcode/${encodeURIComponent(postcode)}`);
   }
 
   async autocompletePostcode(partial: string): Promise<string[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.autocompletePostcode(partial);
+    }
     return this.fetchWithErrorHandling<string[]>(`/mps/autocomplete-postcode/${encodeURIComponent(partial)}`);
   }
 
@@ -184,6 +210,9 @@ class ApiService {
     limit?: number;
     search?: string;
   }): Promise<NewsArticle[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.getLatestNews(params);
+    }
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -201,6 +230,9 @@ class ApiService {
     status?: string;
     house?: string;
   }): Promise<Bill[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.getCurrentBills(params);
+    }
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -213,6 +245,9 @@ class ApiService {
   }
 
   async getBillById(id: string): Promise<Bill> {
+    if (isStaticDeployment()) {
+      return staticApiService.getBillById(id);
+    }
     return this.fetchWithErrorHandling<Bill>(`/bills/${id}`);
   }
 
@@ -224,6 +259,9 @@ class ApiService {
     date_to?: string;
     search?: string;
   }): Promise<Vote[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.getVotes(params);
+    }
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -236,15 +274,24 @@ class ApiService {
   }
 
   async getVoteById(id: string): Promise<Vote> {
+    if (isStaticDeployment()) {
+      return staticApiService.getVoteById(id);
+    }
     return this.fetchWithErrorHandling<Vote>(`/votes/${id}`);
   }
 
   async getVoteStats(): Promise<any> {
+    if (isStaticDeployment()) {
+      return staticApiService.getVoteStats();
+    }
     return this.fetchWithErrorHandling<any>('/votes/stats/summary');
   }
 
   // Health Check
   async healthCheck(): Promise<any> {
+    if (isStaticDeployment()) {
+      return staticApiService.healthCheck();
+    }
     try {
       const response = await fetch(`${this.baseURL.replace('/api', '')}/health`);
       return await response.json();

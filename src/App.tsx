@@ -5,7 +5,7 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import NewsSection from './components/NewsSection';
 import { MPSearch } from './components/MPSearch';
-import { MessageTemplates } from './components/MessageTemplates';
+import MessageTemplates from './components/MessageTemplates';
 import { NewsletterSubscription } from './components/NewsletterSubscription';
 import { Footer } from './components/Footer';
 import CitizenRights from './components/CitizenRights';
@@ -22,9 +22,11 @@ function App() {
   return (
     <ErrorBoundaryNew>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background">
           <Header />
-          <AppContent />
+          <Routes>
+            <Route path="/" element={<AppContent />} />
+          </Routes>
           <Footer />
         </div>
       </Router>

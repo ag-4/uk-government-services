@@ -1,5 +1,5 @@
 import express from 'express';
-import axios from 'axios';
+import { twfyService } from '../services/theyworkforyou';
 import { cache } from '../server';
 import fs from 'fs';
 import path from 'path';
@@ -98,98 +98,124 @@ function generateFallbackBills(): Bill[] {
   ];
 }
 
-// Fetch bills from Parliament API
-async function fetchBillsFromParliamentAPI(): Promise<Bill[]> {
+// Get bills using TheyWorkForYou debates and divisions
+async function fetchBillsFromTWFY(): Promise<Bill[]> {
   try {
-    const response = await axios.get('https://bills-api.parliament.uk/api/v1/Bills', {
-      params: {
-        CurrentHouse: 'All',
-        OriginatingHouse: 'All',
-        MemberId: '',
-        DepartmentId: '',
-        SearchTerm: '',
-        BillStage: 'All',
-        BillType: 'All',
-        SortOrder: 'DateUpdated',
-        CurrentStatus: 'All',
-        take: 100,
-        skip: 0
-      },
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'UK-Gov-Services-App/1.0'
+    // Get recent debates to extract bill information
+    const debates = await twfyService.getDebates(100);
+    const divisions = await twfyService.getDivisions(50);
+    
+    // Extract unique bill topics from debates and divisions
+    const billTopics = new Set<string>();
+    const billsMap = new Map<string, any>();
+    
+    // Process divisions to create bills
+    divisions.forEach((division, index) => {
+      const billId = `twfy-bill-${division.id}`;
+      const title = division.subject || `Parliamentary Division ${division.number}`;
+      
+      if (!billsMap.has(billId)) {
+        billsMap.set(billId, {
+          id: billId,
+          billId: division.id,
+          title: title,
+          longTitle: `A parliamentary matter concerning: ${title}`,
+          summary: `This matter was subject to a parliamentary division on ${division.date}. ${division.result === 'Passed' ? 'The motion was approved' : 'The motion was rejected'} with ${division.yes_total} votes in favor and ${division.no_total} against.`,
+          description: `Parliamentary division on ${title}. Result: ${division.result}`,
+          status: division.result === 'Passed' ? 'Passed' : 'Rejected',
+          stage: 'Division Completed',
+          currentHouse: division.house === 'commons' ? 'Commons' : 'Lords',
+          introducedDate: division.date,
+          lastUpdated: division.date,
+          sponsor: 'Parliament',
+          promoter: 'Government',
+          type: 'Parliamentary Motion',
+          category: getBillCategory(title),
+          url: `https://www.theyworkforyou.com/debates/?id=${division.debate_gid}`,
+          parliamentUrl: `https://www.theyworkforyou.com/debates/?id=${division.debate_gid}`,
+          sessions: [],
+          publications: [],
+          stages: [{
+            id: 1,
+            description: 'Division',
+            house: division.house,
+            stageSittings: [{
+              id: 1,
+              date: division.date,
+              provisional: false
+            }]
+          }]
+        });
       }
     });
-
-    if (response.data && response.data.items) {
-      const bills = await Promise.all(
-        response.data.items.slice(0, 50).map(async (bill: any) => {
-          try {
-            // Fetch detailed bill information
-            const detailResponse = await axios.get(`https://bills-api.parliament.uk/api/v1/Bills/${bill.billId}`, {
-              timeout: 10000
-            });
-            
-            const detail = detailResponse.data;
-            
-            return {
-              id: `bill-${bill.billId}`,
-              billId: bill.billId,
-              title: bill.shortTitle || bill.longTitle || 'Untitled Bill',
-              longTitle: bill.longTitle || bill.shortTitle || '',
-              summary: bill.summary || '',
-              description: detail.summary || bill.summary || `${bill.shortTitle} - Parliamentary Bill`,
-              status: getCurrentStatus(detail.currentStage),
-              stage: detail.currentStage?.description || 'Unknown',
-              currentHouse: detail.currentStage?.house || bill.currentHouse || 'Unknown',
-              introducedDate: bill.introducedDate || bill.dateIntroduced || '',
-              lastUpdated: bill.lastUpdate || new Date().toISOString(),
-              sponsor: detail.sponsor?.name || bill.sponsor || 'Unknown',
-              promoter: detail.promoters?.[0]?.organisationName || 'Government',
-              type: getBillType(bill.billTypeId),
-              category: getBillCategory(bill.shortTitle),
-              url: `https://bills.parliament.uk/bills/${bill.billId}`,
-              parliamentUrl: `https://bills.parliament.uk/bills/${bill.billId}`,
-              sessions: detail.sessions || [],
-              publications: detail.publications || [],
-              stages: detail.stages || []
-            };
-          } catch (detailError) {
-            console.error(`Error fetching bill ${bill.billId} details:`, detailError);
-            // Return basic bill info if detailed fetch fails
-            return {
-              id: `bill-${bill.billId}`,
-              billId: bill.billId,
-              title: bill.shortTitle || bill.longTitle || 'Untitled Bill',
-              longTitle: bill.longTitle || bill.shortTitle || '',
-              summary: bill.summary || '',
-              description: bill.summary || `${bill.shortTitle} - Parliamentary Bill`,
-              status: 'Unknown',
-              stage: 'Unknown',
-              currentHouse: bill.currentHouse || 'Unknown',
-              introducedDate: bill.introducedDate || bill.dateIntroduced || '',
-              lastUpdated: bill.lastUpdate || new Date().toISOString(),
-              sponsor: bill.sponsor || 'Unknown',
-              promoter: 'Government',
-              type: getBillType(bill.billTypeId),
-              category: getBillCategory(bill.shortTitle),
-              url: `https://bills.parliament.uk/bills/${bill.billId}`,
-              parliamentUrl: `https://bills.parliament.uk/bills/${bill.billId}`,
-              sessions: [],
-              publications: [],
-              stages: []
-            };
-          }
-        })
-      );
-      
-      return bills.filter(bill => bill !== null);
-    }
-    return [];
+    
+    // Add some bills from recent debates
+    const debateTopics = debates
+      .filter(debate => debate.content && debate.content.length > 50)
+      .slice(0, 20)
+      .map((debate, index) => {
+        const billId = `twfy-debate-${debate.id}`;
+        const title = extractBillTitle(debate.content) || `Parliamentary Debate ${index + 1}`;
+        
+        return {
+          id: billId,
+          billId: debate.id,
+          title: title,
+          longTitle: `Parliamentary debate: ${title}`,
+          summary: debate.content.substring(0, 200) + '...',
+          description: `Parliamentary debate on ${title}`,
+          status: 'Under Discussion',
+          stage: 'Debate Stage',
+          currentHouse: 'Commons',
+          introducedDate: debate.date,
+          lastUpdated: debate.date,
+          sponsor: debate.speaker?.name || 'Parliament',
+          promoter: 'Government',
+          type: 'Parliamentary Debate',
+          category: getBillCategory(title),
+          url: debate.url || `https://www.theyworkforyou.com/debates/?id=${debate.id}`,
+          parliamentUrl: debate.url || `https://www.theyworkforyou.com/debates/?id=${debate.id}`,
+          sessions: [],
+          publications: [],
+          stages: [{
+            id: 1,
+            description: 'Debate',
+            house: 'Commons',
+            stageSittings: [{
+              id: 1,
+              date: debate.date,
+              provisional: false
+            }]
+          }]
+        };
+      });
+    
+    const allBills = [...Array.from(billsMap.values()), ...debateTopics];
+    return allBills.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+    
   } catch (error) {
-    console.error('Error fetching bills from Parliament API:', error);
+    console.error('Error fetching bills from TWFY:', error);
     return [];
   }
+}
+
+// Helper function to extract bill titles from debate content
+function extractBillTitle(content: string): string | null {
+  // Look for common bill patterns
+  const patterns = [
+    /(?:Bill|Act)\s+(?:on|for|to)\s+([^.]{10,50})/i,
+    /([A-Z][^.]{10,50})\s+Bill/i,
+    /Motion\s+(?:on|for|to)\s+([^.]{10,50})/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = content.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  return null;
 }
 
 // Get current status from stage information
@@ -241,18 +267,17 @@ function getBillCategory(title: string): string {
   return 'General';
 }
 
-// Get bills with fallback strategy
+// Get bills with caching
 async function getBills(): Promise<Bill[]> {
-  const cacheKey = 'all_bills';
+  const cacheKey = 'twfy_bills';
   let bills = cache.get(cacheKey) as Bill[];
 
   if (!bills) {
-    // Try Parliament API first
-    bills = await fetchBillsFromParliamentAPI();
+    bills = await fetchBillsFromTWFY();
     
-    // If API fails, use programmatic fallback data
+    // If TWFY fails, use fallback data
     if (bills.length === 0) {
-      console.log('Parliament Bills API unavailable, using fallback bills data');
+      console.log('TheyWorkForYou API unavailable, using fallback bills data');
       bills = generateFallbackBills();
     }
     
@@ -330,6 +355,46 @@ router.get('/bills/category/:category', async (req: express.Request, res: expres
     res.status(500).json({
       success: false,
       error: 'Failed to fetch bills by category'
+    });
+  }
+});
+
+// GET /api/parliament/votes - Get recent voting records from TheyWorkForYou
+router.get('/votes', async (req: express.Request, res: express.Response) => {
+  try {
+    const { limit = 50, house = 'commons' } = req.query;
+    
+    // Get divisions directly from TheyWorkForYou
+    const divisions = await twfyService.getDivisions(parseInt(limit as string));
+    
+    const votes = divisions.map(division => ({
+      id: division.id,
+      date: division.date,
+      question: division.subject,
+      result: division.result,
+      ayes: division.yes_total,
+      noes: division.no_total,
+      abstentions: division.absent_total,
+      majority: division.majority,
+      turnout: division.turnout,
+      house: division.house,
+      number: division.number,
+      debate_gid: division.debate_gid,
+      url: `https://www.theyworkforyou.com/debates/?id=${division.debate_gid}`
+    }));
+    
+    res.json({
+      success: true,
+      data: votes,
+      count: votes.length,
+      message: 'Voting records retrieved successfully from TheyWorkForYou'
+    });
+  } catch (error) {
+    console.error('Error fetching voting records:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch voting records',
+      message: 'An error occurred while retrieving voting data'
     });
   }
 });

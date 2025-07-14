@@ -11,6 +11,7 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import mpsRouter from './routes/mps';
 import newsRouter from './routes/news';
 import parliamentRouter from './routes/parliament';
+import votesRouter from './routes/votes';
 import summarizeRouter from './routes/summarize';
 import databaseRouter from './routes/database';
 
@@ -76,6 +77,8 @@ app.get('/health', (req, res) => {
 app.use('/api/mps', mpsRouter);
 app.use('/api/news', newsRouter);
 app.use('/api/parliament', parliamentRouter);
+app.use('/api/votes', votesRouter);
+app.use('/api/bills', parliamentRouter); // Alias for parliament routes
 app.use('/api/database', databaseRouter);
 app.use('/api/summarize', summarizeRouter);
 

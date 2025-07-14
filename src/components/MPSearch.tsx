@@ -8,26 +8,10 @@ import { Avatar } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { bookmarkItem, unbookmarkItem, database, trackAction } from '../services/database';
-import { useMPandCouncil } from '@/hooks/useMPandCouncil';
+import { apiService, fallbackData } from '../lib/api';
+import type { MP } from '../lib/api';
 
-// Define the MP interface to match our data structure
-interface MP {
-  id: string;
-  name: string;
-  party: string;
-  constituency: string;
-  email?: string;
-  phone?: string;
-  postcodes?: string[];
-  image?: string;
-  isActive?: boolean;
-  fullTitle?: string;
-  addresses?: any[];
-  address?: string;
-  website?: string;
-  socialMedia?: any;
-  biography?: string;
-}
+// MP interface is now imported from api.ts
 
 const partyColors: { [key: string]: string } = {
   'Conservative': 'bg-blue-700 text-white',
@@ -136,79 +120,21 @@ export function MPSearch() {
 
   const loadMPs = async () => {
     try {
-      // Try to fetch from real UK Parliament API first
-      try {
-        const response = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650');
-        
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.items && data.items.length > 0) {
-            // Transform Parliament API data to our MP interface with enhanced data
-            const transformedMPs = data.items.map((member: any) => ({
-              id: member.value.id.toString(),
-              name: member.value.nameDisplayAs,
-              party: member.value.latestParty?.name || 'Unknown',
-              constituency: member.value.latestHouseMembership?.membershipFrom || 'Unknown',
-              email: `${member.value.nameDisplayAs.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
-              phone: '020 7219 3000',
-              image: member.value.thumbnailUrl,
-              isActive: true,
-              fullTitle: member.value.nameFullTitle,
-              website: `https://members.parliament.uk/member/${member.value.id}/contact`,
-              address: 'House of Commons, Westminster, London SW1A 0AA',
-              biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`,
-              postcodes: [] // Will be populated as needed
-            }));
-            
-            setMps(transformedMPs);
-            console.log(`Successfully loaded ${transformedMPs.length} MPs from Parliament API`);
-            return;
-          }
-        }
-      } catch (apiError) {
-        console.warn('Parliament API unavailable, falling back to alternative approach:', apiError);
-      }
-      
-      // Enhanced fallback: Try to fetch from Parliament API with better error handling
-      try {
-        const parliamentResponse = await fetch('https://members-api.parliament.uk/api/Members/Search?House=Commons&IsCurrentMember=true&take=650', {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'GOVWHIZ-App/1.0'
-          }
-        });
-        
-        if (parliamentResponse.ok) {
-          const parliamentData = await parliamentResponse.json();
-          const transformedMPs = parliamentData.items?.map((member: any) => ({
-            id: `MP${member.value.id}`,
-            name: member.value.nameDisplayAs,
-            constituency: member.value.latestHouseMembership?.membershipFrom || 'Unknown',
-            party: member.value.latestParty?.name || 'Unknown',
-            email: `${member.value.nameDisplayAs.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
-            phone: '020 7219 3000',
-            image: member.value.thumbnailUrl || '/images/mp-placeholder.jpg',
-            postcodes: [],
-            biography: `${member.value.nameDisplayAs} is the ${member.value.latestParty?.name || ''} MP for ${member.value.latestHouseMembership?.membershipFrom || ''}.`,
-            website: `https://members.parliament.uk/member/${member.value.id}/contact`,
-            address: 'House of Commons, Westminster, London SW1A 0AA'
-          })) || [];
-          
-          setMps(transformedMPs);
-          console.log(`Loaded ${transformedMPs.length} MPs from Parliament API fallback`);
-        } else {
-          throw new Error(`Parliament API failed with status: ${parliamentResponse.status}`);
-        }
-      } catch (parliamentError) {
-        console.error('Parliament API also failed:', parliamentError);
-        // Final fallback: Provide helpful error message
-        setMps([]);
-        setError('Unable to load MP data from Parliament API. Please check your internet connection and try again later.');
-      }
+      // Use the new API service to get all MPs
+      const allMPs = await apiService.getAllMPs();
+      setMps(allMPs);
+      console.log(`Successfully loaded ${allMPs.length} MPs from API service`);
     } catch (err) {
-      console.error('Error loading MPs:', err);
-      setError('Failed to load MP data. Please try again.');
+      console.error('Error loading MPs from API service:', err);
+      try {
+        // Fallback to fallback data
+        const fallbackMPs = await fallbackData.mps();
+        setMps(fallbackMPs);
+        console.log(`Loaded ${fallbackMPs.length} MPs from fallback data`);
+      } catch (fallbackErr) {
+        console.error('Error loading fallback MP data:', fallbackErr);
+        setError('Unable to load MP data. Please check your internet connection and try again later.');
+      }
     }
   };
 
@@ -217,61 +143,58 @@ export function MPSearch() {
 
     const normalizedQuery = query.toLowerCase().trim();
     
-    // If it looks like a postcode, try postcode lookup first
-    if (/^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i.test(normalizedQuery)) {
-      return await searchByPostcode(normalizedQuery);
+    try {
+      // Use the new API service search methods
+      if (/^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i.test(normalizedQuery)) {
+        // Postcode search
+        return await apiService.getMPByPostcode(normalizedQuery);
+      }
+      
+      // General search by name, party, or constituency
+      const searchParams: any = {};
+      
+      if (searchTab === 'postcode') {
+        searchParams.postcode = query;
+      } else if (searchTab === 'name') {
+        searchParams.search = query;
+      } else if (searchTab === 'party') {
+        searchParams.party = query;
+      } else if (searchTab === 'constituency') {
+        searchParams.constituency = query;
+      } else {
+        searchParams.search = query;
+      }
+      
+      return await apiService.searchMPs(searchParams);
+    } catch (err) {
+      console.error('API search failed, falling back to local search:', err);
+      
+      // Fallback to local search if API fails
+      if (/^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i.test(normalizedQuery)) {
+        return await searchByPostcode(normalizedQuery);
+      }
+      
+      return mps.filter(mp => 
+        mp.name.toLowerCase().includes(normalizedQuery) ||
+        mp.party.toLowerCase().includes(normalizedQuery) ||
+        mp.constituency.toLowerCase().includes(normalizedQuery)
+      );
     }
-    
-    // If it looks like a postcode area (e.g., "SW1", "E1"), search by area
-    if (/^[A-Z]{1,2}[0-9]{1,2}$/i.test(normalizedQuery)) {
-      return await searchByPostcodeArea(normalizedQuery);
-    }
-
-    // Search by name, party, or constituency
-    return mps.filter(mp => 
-      mp.name.toLowerCase().includes(normalizedQuery) ||
-      mp.party.toLowerCase().includes(normalizedQuery) ||
-      mp.constituency.toLowerCase().includes(normalizedQuery)
-    );
   };
-
-  // Enhanced postcode search using the new hook
-  const { fetchData: fetchMPData, data: mpCouncilData, error: mpCouncilError, loading: mpCouncilLoading } = useMPandCouncil();
 
   const searchByPostcode = async (postcode: string): Promise<MP[]> => {
     try {
       // Clean postcode
       const normalizedPostcode = postcode.replace(/\s+/g, '').toUpperCase();
       
-      // Try the enhanced MP lookup first
+      // Try API service first
       try {
-        await fetchMPData(normalizedPostcode);
-        
-        // If successful, convert the result to our MP format
-        if (mpCouncilData && mpCouncilData.mp) {
-          const enhancedMP: MP = {
-            id: mpCouncilData.mp.person_id || mpCouncilData.mp.mp_id || `mp-${Date.now()}`,
-            name: mpCouncilData.mp.full_name,
-            party: mpCouncilData.mp.party,
-            constituency: mpCouncilData.mp.constituency,
-            email: `${mpCouncilData.mp.full_name.toLowerCase().replace(/\s+/g, '.')}.mp@parliament.uk`,
-            phone: '020 7219 3000',
-            image: `/images/mp-placeholder.jpg`,
-            isActive: true,
-            website: `https://members.parliament.uk/member/${mpCouncilData.mp.person_id}/contact`,
-            address: 'House of Commons, Westminster, London SW1A 0AA',
-            biography: `${mpCouncilData.mp.full_name} is the ${mpCouncilData.mp.party} MP for ${mpCouncilData.mp.constituency}.`,
-            postcodes: [normalizedPostcode]
-          };
-          
-          return [enhancedMP];
-        }
-      } catch (enhancedError) {
-        console.warn('Enhanced MP lookup failed, falling back to standard approach:', enhancedError);
+        return await apiService.getMPByPostcode(normalizedPostcode);
+      } catch (apiError) {
+        console.warn('API postcode search failed, falling back to local approach:', apiError);
       }
       
-      // Fallback to original approach
-      // 1. Validate postcode & get district using Postcodes.io
+      // Fallback to postcodes.io + local MP matching
       const pcResponse = await fetch(`https://api.postcodes.io/postcodes/${normalizedPostcode}`);
       const pcJson = await pcResponse.json();
       
@@ -282,7 +205,7 @@ export function MPSearch() {
       const constituency = pcJson.result.parliamentary_constituency;
       const adminDistrict = pcJson.result.admin_district;
       
-      // 2. Enhanced constituency matching with loaded MPs
+      // Enhanced constituency matching with loaded MPs
       if (constituency) {
         // First try exact constituency match from loaded MPs
         let foundMPs = mps.filter(mp => 
@@ -410,7 +333,7 @@ export function MPSearch() {
       };
       return partyLogos[mp.party] || '/images/mp-placeholder.jpg';
     }
-    return mp.image || '/images/mp-placeholder.jpg';
+    return mp.thumbnailUrl || mp.image || '/images/mp-placeholder.jpg';
   };
 
   const renderMPCard = (mp: MP) => (

@@ -95,118 +95,44 @@ const AIExplainBill: React.FC = () => {
   }, [messages]);
 
   const generateAIResponse = async (request: ExplanationRequest): Promise<string> => {
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
+    try {
+      // Check if puter is available
+      if (typeof window !== 'undefined' && (window as any).puter) {
+        const prompt = `Please explain the "${request.billTitle}" in simple, easy-to-understand terms. Include:
 
-    // Mock AI responses based on bill title
-    const responses: Record<string, string> = {
-      'online safety bill': `The Online Safety Bill is designed to make the internet safer for everyone, especially children. Here's what it does in simple terms:
+1. **Main Goals**: What the bill aims to achieve
+2. **Key Changes**: Specific changes it would make
+3. **Who It Affects**: Which groups or sectors are impacted
+4. **Why It Matters**: The significance and potential impact
+5. **Timeline**: Current status and when it might take effect
 
-**Main Goals:**
-• Requires social media companies to remove harmful content quickly
-• Protects children from seeing inappropriate material online
-• Gives users more control over what they see
-• Makes companies more transparent about their content policies
+Please format your response with clear headings and bullet points for easy reading. Focus on making complex legal language accessible to everyday citizens.`;
+        
+        const response = await (window as any).puter.ai.chat(prompt, { model: "gpt-4o-mini" });
+        return response;
+      } else {
+        throw new Error('Puter.js not available');
+      }
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      // Fallback to a generic helpful message
+      return `I'd be happy to explain the "${request.billTitle}" in simple terms! 
 
-**Key Changes:**
-• **Age Verification**: Websites must verify users' ages to protect children
-• **Content Removal**: Platforms must remove illegal content within strict timeframes
-• **User Controls**: You'll get better tools to filter and block unwanted content
-• **Transparency Reports**: Companies must publish regular reports about harmful content
+**To provide you with the most accurate explanation, I recommend:**
 
-**Who Does This Affect?**
-• Social media platforms (Facebook, Twitter, TikTok, etc.)
-• Search engines (Google, Bing)
-• Video sharing sites (YouTube)
-• Online gaming platforms
-• Dating apps
-
-**Penalties:**
-Companies that don't comply can face fines up to 10% of their global revenue - that's potentially billions of pounds!
-
-**Why It Matters:**
-This law aims to balance free speech with safety, making sure the internet remains open while protecting users from harm.`,
-
-      'data protection and digital information bill': `The Data Protection and Digital Information Bill updates how your personal data is handled in the UK. Here's what you need to know:
-
-**Main Purpose:**
-• Simplifies data protection rules for businesses
-• Maintains strong privacy protections for individuals
-• Reduces bureaucratic burden while keeping data safe
-
-**Key Changes:**
-• **Easier Consent**: Companies can use "legitimate interest" more often instead of asking for explicit consent
-• **Reduced Paperwork**: Less documentation required for data processing
-• **Cookie Reforms**: Fewer annoying cookie pop-ups on websites
-• **Research Benefits**: Easier to use data for scientific research and innovation
-
-**What This Means for You:**
-• Fewer consent pop-ups when browsing websites
-• Your data is still protected, but with less friction
-• Companies can innovate more easily while respecting your privacy
-• You still have the right to access, correct, and delete your data
-
-**Business Impact:**
-• Reduced compliance costs
-• More flexibility in data processing
-• Clearer rules for international data transfers
-• Support for AI and machine learning development
-
-**The Balance:**
-This bill tries to keep the UK competitive in the digital economy while maintaining the privacy protections people expect.`,
-
-      'tobacco and vapes bill': `The Tobacco and Vapes Bill aims to create the first "smokefree generation" in the UK. Here's how:
-
-**The Big Idea:**
-• Anyone born on or after January 1, 2009, will never legally be able to buy tobacco products
-• This means today's children will grow up in a smokefree generation
-
-**Key Measures:**
-• **Age Restrictions**: The legal age for buying tobacco will increase by one year, every year
-• **Vaping Controls**: Stricter rules on vape advertising and flavors to protect children
-• **Enforcement**: Stronger penalties for shops that sell to underage customers
-• **Public Health**: More funding for smoking cessation programs
-
-**What Changes:**
-• **For Current Smokers**: If you can legally buy tobacco now, you always will be able to
-• **For Young People**: Those under 15 today will never be able to legally buy tobacco
-• **Vaping**: Tighter controls on marketing, especially flavors that appeal to children
-• **Retailers**: Stricter licensing and penalties for illegal sales
-
-**Health Impact:**
-• Could prevent thousands of deaths from smoking-related diseases
-• Reduces healthcare costs for the NHS
-• Protects children from nicotine addiction
-
-**Why This Approach:**
-Rather than banning tobacco outright (which could create black markets), this gradually phases it out for future generations while respecting current users' choices.`,
-
-      'default': `I'd be happy to explain this bill in simple terms! However, I need a bit more information to provide you with an accurate explanation.
-
-**To give you the best explanation, please:**
-• Provide the full title of the bill
-• Share a link to the bill on parliament.uk if you have it
-• Let me know what specific aspects you'd like me to focus on
+• **Visit Parliament.UK**: Check the official bill page for detailed information
+• **Key Areas to Focus On**: Look for the bill's main objectives, who it affects, and implementation timeline
+• **Ask Specific Questions**: Feel free to ask about particular aspects that interest you most
 
 **I can help explain:**
 • What the bill aims to achieve
-• Who it affects
+• Who it affects and how
 • Key changes it would make
 • Potential impacts on daily life
-• Timeline and current status
+• Current status and timeline
 
-**Common Questions I Can Answer:**
-• "What does this bill actually do?"
-• "How will this affect me?"
-• "Why is this bill needed?"
-• "What are the main arguments for and against?"
-• "When will this become law?"
-
-Feel free to ask follow-up questions - I'm here to make complex legislation understandable!`
-    };
-
-    const key = request.billTitle.toLowerCase();
-    return responses[key] || responses['default'];
+Please try again, and I'll do my best to provide a comprehensive explanation!`;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

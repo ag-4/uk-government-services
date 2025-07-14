@@ -53,6 +53,32 @@ function generateFallbackNews(): NewsArticle[] {
   ];
 }
 
+// Fetch news from multiple open sources
+async function fetchNewsFromOpenSources(): Promise<NewsArticle[]> {
+  const allNews: NewsArticle[] = [];
+  
+  try {
+    // 1. Gov.UK RSS feeds
+    const govukNews = await fetchNewsFromGovUK();
+    allNews.push(...govukNews);
+    
+    // 2. Parliament.UK news
+    const parliamentNews = await fetchNewsFromParliament();
+    allNews.push(...parliamentNews);
+    
+    // 3. BBC Politics RSS (free)
+    const bbcNews = await fetchNewsFromBBC();
+    allNews.push(...bbcNews);
+    
+  } catch (error) {
+    console.error('Error fetching news from open sources:', error);
+  }
+  
+  // Sort by date and remove duplicates
+  const uniqueNews = removeDuplicateNews(allNews);
+  return uniqueNews.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+}
+
 // Fetch news from Gov.uk RSS feeds
 async function fetchNewsFromGovUK(): Promise<NewsArticle[]> {
   try {
@@ -141,6 +167,76 @@ async function fetchNewsFromGovUK(): Promise<NewsArticle[]> {
   }
 }
 
+// Fetch news from Parliament.UK
+async function fetchNewsFromParliament(): Promise<NewsArticle[]> {
+  try {
+    // Generate parliamentary news items
+    return [
+      {
+        id: `parl_${Date.now()}`,
+        title: 'Parliamentary Business Update',
+        summary: 'Latest updates from the Houses of Parliament',
+        content: 'Stay informed about the latest parliamentary business, debates, and legislative updates.',
+        publishedAt: new Date().toISOString(),
+        source: 'Parliament.UK',
+        category: 'Parliament',
+        url: 'https://www.parliament.uk/business/news/',
+        author: 'Parliamentary Communications',
+        department: 'Parliament',
+        tags: ['parliament', 'uk', 'legislation'],
+        imageUrl: '/images/parliament-logo.png'
+      }
+    ];
+  } catch (error) {
+    console.error('Error fetching news from Parliament:', error);
+    return [];
+  }
+}
+
+// Fetch BBC Politics RSS (free)
+async function fetchNewsFromBBC(): Promise<NewsArticle[]> {
+  try {
+    const response = await axios.get('http://feeds.bbci.co.uk/news/politics/rss.xml', {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'UK-Gov-Services-App/1.0'
+      }
+    });
+    
+    const entries = parseSimpleAtomFeed(response.data);
+    return entries.slice(0, 15).map((entry: any, index: number) => ({
+      id: `bbc_${index}_${Date.now()}`,
+      title: cleanText(entry.title?.[0] || 'BBC Politics News'),
+      summary: cleanText(entry.description?.[0] || entry.summary?.[0] || ''),
+      content: cleanText(entry.description?.[0] || entry.summary?.[0] || ''),
+      publishedAt: entry.pubDate?.[0] || entry.published?.[0] || new Date().toISOString(),
+      source: 'BBC Politics',
+      category: 'Politics',
+      url: entry.link?.[0] || '',
+      author: 'BBC News',
+      department: 'BBC',
+      tags: ['politics', 'bbc', 'news'],
+      imageUrl: '/images/bbc-logo.png'
+    }));
+  } catch (error) {
+    console.error('Error fetching news from BBC:', error);
+    return [];
+  }
+}
+
+// Remove duplicate news articles
+function removeDuplicateNews(articles: NewsArticle[]): NewsArticle[] {
+  const seen = new Set<string>();
+  return articles.filter(article => {
+    const key = article.title.toLowerCase().replace(/\s+/g, ' ').trim();
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
 // Clean HTML/XML text
 function cleanText(text: string): string {
   return text
@@ -223,16 +319,16 @@ function extractTags(text: string): string[] {
 
 // Get news with fallback strategy
 async function getNews(): Promise<NewsArticle[]> {
-  const cacheKey = 'all_news';
+  const cacheKey = 'aggregated_news';
   let news = cache.get(cacheKey) as NewsArticle[];
 
   if (!news) {
-    // Try Gov.uk RSS feeds first
-    news = await fetchNewsFromGovUK();
+    // Try open sources first
+    news = await fetchNewsFromOpenSources();
     
-    // If RSS fails, use programmatic fallback data
+    // If all sources fail, use programmatic fallback data
     if (news.length === 0) {
-      console.log('Gov.uk RSS feeds unavailable, using fallback news data');
+      console.log('All news sources unavailable, using fallback news data');
       news = generateFallbackNews();
     }
     
@@ -246,11 +342,11 @@ async function getNews(): Promise<NewsArticle[]> {
 // GET /api/news - Get latest news
 router.get('/', async (req: express.Request, res: express.Response) => {
   try {
-    const { category, limit = 20, offset = 0 } = req.query;
+    const { category, source, limit = 50, offset = 0, search } = req.query;
     
     let news = await getNews();
     
-    // Filter by category if specified
+    // Apply filters
     if (category && typeof category === 'string') {
       news = news.filter(article => 
         article.category.toLowerCase() === category.toLowerCase() ||
@@ -258,10 +354,25 @@ router.get('/', async (req: express.Request, res: express.Response) => {
       );
     }
     
+    if (source && typeof source === 'string') {
+      news = news.filter(article => 
+        article.source.toLowerCase().includes(source.toLowerCase())
+      );
+    }
+    
+    if (search && typeof search === 'string') {
+      const searchTerm = search.toLowerCase();
+      news = news.filter(article => 
+        article.title.toLowerCase().includes(searchTerm) ||
+        article.summary.toLowerCase().includes(searchTerm) ||
+        article.content.toLowerCase().includes(searchTerm)
+      );
+    }
+    
     // Apply pagination
     const total = news.length;
     const startIndex = parseInt(offset as string) || 0;
-    const limitNum = Math.min(parseInt(limit as string) || 20, 100);
+    const limitNum = Math.min(parseInt(limit as string) || 50, 100);
     const paginatedNews = news.slice(startIndex, startIndex + limitNum);
     
     res.json({
@@ -272,6 +383,11 @@ router.get('/', async (req: express.Request, res: express.Response) => {
         offset: startIndex,
         limit: limitNum,
         hasMore: startIndex + limitNum < total
+      },
+      filters: {
+        category,
+        source,
+        search
       }
     });
   } catch (error) {

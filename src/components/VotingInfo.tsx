@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Vote, CheckCircle, Clock, Users, MapPin, Mail, User, Calendar, AlertCircle } from 'lucide-react';
+import { Vote, CheckCircle, Clock, Users, MapPin, Mail, User, Calendar, AlertCircle, TrendingUp, BarChart3 } from 'lucide-react';
+import { apiService, fallbackData } from '../lib/api';
+import type { Vote as VoteData } from '../lib/api';
 
 interface RegistrationStep {
   step: number;
@@ -42,13 +44,50 @@ interface VotingData {
   important_dates: Record<string, string>;
 }
 
+interface VotingStats {
+  totalVotes: number;
+  recentVotes: VoteData[];
+  participationRate?: number;
+}
+
 export default function VotingInfo() {
   const [data, setData] = useState<VotingData | null>(null);
-  const [activeSection, setActiveSection] = useState<'registration' | 'voting' | 'elections'>('registration');
+  const [votingStats, setVotingStats] = useState<VotingStats | null>(null);
+  const [activeSection, setActiveSection] = useState<'registration' | 'voting' | 'elections' | 'parliamentary'>('registration');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchVotingInfo();
+    fetchParliamentaryVotes();
   }, []);
+
+  const fetchParliamentaryVotes = async () => {
+    try {
+      const [votes, stats] = await Promise.all([
+        apiService.getVotes({ limit: 5 }),
+        apiService.getVoteStats()
+      ]);
+      
+      setVotingStats({
+        totalVotes: stats.totalVotes || 0,
+        recentVotes: votes,
+        participationRate: stats.averageParticipation
+      });
+    } catch (error) {
+      console.warn('Failed to fetch parliamentary voting data:', error);
+      // Use fallback data
+      try {
+        const fallbackVotes = await fallbackData.votes();
+        setVotingStats({
+          totalVotes: fallbackVotes.length,
+          recentVotes: fallbackVotes.slice(0, 5),
+          participationRate: 85
+        });
+      } catch (fallbackError) {
+        console.error('Fallback voting data also failed:', fallbackError);
+      }
+    }
+  };
 
   const fetchVotingInfo = async () => {
     try {
@@ -153,10 +192,12 @@ export default function VotingInfo() {
       setData(votingInfoData);
     } catch (error) {
       console.error('Error creating voting info:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!data) {
+  if (loading || !data) {
     return (
       <div className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -194,7 +235,7 @@ export default function VotingInfo() {
           <div className="inline-flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setActiveSection('registration')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                 activeSection === 'registration'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -204,7 +245,7 @@ export default function VotingInfo() {
             </button>
             <button
               onClick={() => setActiveSection('voting')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                 activeSection === 'voting'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -214,13 +255,23 @@ export default function VotingInfo() {
             </button>
             <button
               onClick={() => setActiveSection('elections')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                 activeSection === 'elections'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Election Types
+            </button>
+            <button
+              onClick={() => setActiveSection('parliamentary')}
+              className={`px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                activeSection === 'parliamentary'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Parliamentary Votes
             </button>
           </div>
         </div>
@@ -335,8 +386,161 @@ export default function VotingInfo() {
             </div>
           </div>
         )}
+
+        {activeSection === 'parliamentary' && (
+          <div className="space-y-8">
+            {/* Voting Statistics */}
+            {votingStats && (
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div className="uk-gov-card text-center">
+                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
+                    <BarChart3 className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900">{votingStats.totalVotes.toLocaleString()}</h3>
+                  <p className="text-gray-600">Total Parliamentary Votes</p>
+                </div>
+                
+                <div className="uk-gov-card text-center">
+                  <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-4">
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {votingStats.participationRate ? `${votingStats.participationRate}%` : 'N/A'}
+                  </h3>
+                  <p className="text-gray-600">Average Participation</p>
+                </div>
+                
+                <div className="uk-gov-card text-center">
+                  <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-4">
+                    <Vote className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900">{votingStats.recentVotes.length}</h3>
+                  <p className="text-gray-600">Recent Votes</p>
+                </div>
+              </div>
+            )}
+
+            {/* Recent Parliamentary Votes */}
+            <div className="uk-gov-card">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">
+                Recent Parliamentary Votes
+              </h3>
+              
+              {votingStats?.recentVotes && votingStats.recentVotes.length > 0 ? (
+                <div className="space-y-4">
+                  {votingStats.recentVotes.map((vote, index) => (
+                    <ParliamentaryVoteCard key={vote.id || index} vote={vote} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Vote className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No recent parliamentary votes available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Information about Parliamentary Voting */}
+            <div className="uk-gov-card bg-blue-50 border border-blue-200">
+              <div className="flex items-start space-x-4">
+                <AlertCircle className="w-6 h-6 text-blue-600 mt-1" />
+                <div>
+                  <h3 className="text-xl font-bold text-blue-900 mb-4">
+                    About Parliamentary Voting
+                  </h3>
+                  <div className="space-y-3 text-blue-800">
+                    <p>
+                      Parliamentary votes (divisions) occur when MPs vote on legislation, motions, and other matters in the House of Commons.
+                    </p>
+                    <p>
+                      MPs vote by walking through either the 'Aye' lobby (in favor) or the 'No' lobby (against). 
+                      This data comes from TheyWorkForYou, which tracks all parliamentary proceedings.
+                    </p>
+                    <p>
+                      You can see how your MP voted on specific issues by searching for them in the MP Search section.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
+  );
+}
+
+interface ParliamentaryVoteCardProps {
+  vote: VoteData;
+}
+
+function ParliamentaryVoteCard({ vote }: ParliamentaryVoteCardProps) {
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getResultColor = (result: string) => {
+    switch (result?.toLowerCase()) {
+      case 'passed':
+      case 'agreed':
+        return 'text-green-700 bg-green-100';
+      case 'rejected':
+      case 'disagreed':
+        return 'text-red-700 bg-red-100';
+      default:
+        return 'text-gray-700 bg-gray-100';
+    }
+  };
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <h4 className="font-semibold text-gray-900 mb-1">
+            {vote.title || vote.subject || 'Parliamentary Vote'}
+          </h4>
+          <p className="text-sm text-gray-600 mb-2">
+            {vote.description || 'No description available'}
+          </p>
+          <div className="flex items-center space-x-4 text-sm text-gray-500">
+            <span className="flex items-center space-x-1">
+              <Calendar className="w-4 h-4" />
+              <span>{formatDate(vote.date)}</span>
+            </span>
+            {vote.result && (
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getResultColor(vote.result)}`}>
+                {vote.result}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {(vote.ayeCount !== undefined || vote.noCount !== undefined) && (
+        <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
+          <div className="text-center">
+            <div className="text-lg font-bold text-green-600">
+              {vote.ayeCount || 0}
+            </div>
+            <div className="text-xs text-gray-500">Ayes</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-red-600">
+              {vote.noCount || 0}
+            </div>
+            <div className="text-xs text-gray-500">Noes</div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

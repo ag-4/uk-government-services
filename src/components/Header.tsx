@@ -55,9 +55,9 @@ const Header: React.FC = () => {
             {/* Logo and Title */}
             <div className="flex items-center space-x-3">
               <img 
-                src="/images/uk-flag.svg" 
-                alt="United Kingdom Flag" 
-                className="w-8 h-6"
+                src="/images/govwhiz-logo.svg" 
+                alt="GOVWHIZ Logo" 
+                className="w-8 h-8"
                 loading="eager"
                 decoding="sync"
               />

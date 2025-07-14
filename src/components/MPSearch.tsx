@@ -282,9 +282,9 @@ export function MPSearch() {
       if (results.length === 0) {
         // Enhanced error message with suggestions
         if (/^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i.test(searchQuery)) {
-          setError('No MPs found for this postcode. Please check the postcode is correct (e.g., SW1A 1AA) or try searching by constituency name.');
+          setError(`No MPs found for postcode "${searchQuery}". This postcode may not be in our database. Try these examples:\n• BS5 1DL (Bristol East)\n• SW1A 1AA (Westminster)\n• M1 1AA (Manchester)\n• Or search by constituency name instead.`);
         } else {
-          setError('No MPs found for your search. Try searching by:\n• Full postcode (e.g., SW1A 1AA)\n• Constituency name (e.g., Westminster)\n• MP name (e.g., John Smith)\n• Political party (e.g., Conservative)');
+          setError('No MPs found for your search. Try searching by:\n• Full postcode (e.g., BS5 1DL, SW1A 1AA)\n• Constituency name (e.g., Bristol East, Westminster)\n• MP name (e.g., Diane Abbott)\n• Political party (e.g., Labour, Conservative)');
         }
       }
     } catch (err) {
@@ -600,8 +600,33 @@ export function MPSearch() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+        <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg whitespace-pre-line">
           {error}
+        </div>
+      )}
+
+      {!searchAttempted && (
+        <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-lg font-semibold text-blue-900 mb-3">Try these examples:</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h4 className="font-medium text-blue-800 mb-2">Postcodes:</h4>
+              <ul className="space-y-1 text-blue-700">
+                <li>• BS5 1DL (Bristol East)</li>
+                <li>• SW1A 1AA (Westminster)</li>
+                <li>• M1 1AA (Manchester)</li>
+                <li>• E1 6AN (Bethnal Green)</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-blue-800 mb-2">Other searches:</h4>
+              <ul className="space-y-1 text-blue-700">
+                <li>• MP names: "Diane Abbott", "Keir Starmer"</li>
+                <li>• Parties: "Labour", "Conservative"</li>
+                <li>• Constituencies: "Bristol East", "Westminster"</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
 

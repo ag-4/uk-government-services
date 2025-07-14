@@ -220,6 +220,26 @@ export function MPSearch() {
           );
         }
         
+        // Special handling for Bristol constituencies (fix data mismatch)
+        if (foundMPs.length === 0 && constituency.toLowerCase().includes('bristol')) {
+          const bristolConstituencies = mps.filter(mp => 
+            mp.constituency.toLowerCase().includes('bristol')
+          );
+          
+          // For Bristol East, try to find the best match based on postcode area
+          if (constituency.toLowerCase().includes('east')) {
+            foundMPs = bristolConstituencies.filter(mp => 
+              mp.constituency.toLowerCase().includes('north east') ||
+              mp.postcodes?.some(p => p.startsWith('BS5') || p.startsWith('BS15') || p.startsWith('BS16'))
+            );
+          }
+          
+          // If still no specific match, return all Bristol MPs
+          if (foundMPs.length === 0) {
+            foundMPs = bristolConstituencies;
+          }
+        }
+        
         // If still no match, try to find by admin district
         if (foundMPs.length === 0 && adminDistrict) {
           foundMPs = mps.filter(mp => 
@@ -233,8 +253,22 @@ export function MPSearch() {
         }
       }
       
-      // Final fallback: search by postcode area
+      // Final fallback: search by postcode area and specific postcode patterns
       const postcodeArea = normalizedPostcode.match(/^([A-Z]{1,2})/)?.[1];
+      const postcodeDistrict = normalizedPostcode.match(/^([A-Z]{1,2}[0-9]{1,2})/)?.[1];
+      
+      if (postcodeDistrict) {
+        // First try to find MPs with exact postcode district match
+        let areaResults = mps.filter(mp => 
+          mp.postcodes?.some(p => p.replace(/\s/g, '').startsWith(postcodeDistrict)) ||
+          mp.constituencyPostcodes?.some(p => p.replace(/\s/g, '').startsWith(postcodeDistrict))
+        );
+        
+        if (areaResults.length > 0) {
+          return areaResults;
+        }
+      }
+      
       if (postcodeArea) {
         return mps.filter(mp => 
           mp.postcodes?.some(p => p.startsWith(postcodeArea)) ||
@@ -282,9 +316,9 @@ export function MPSearch() {
       if (results.length === 0) {
         // Enhanced error message with suggestions
         if (/^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i.test(searchQuery)) {
-          setError(`No MPs found for postcode "${searchQuery}". This postcode may not be in our database. Try these examples:\n• BS5 1DL (Bristol East)\n• SW1A 1AA (Westminster)\n• M1 1AA (Manchester)\n• Or search by constituency name instead.`);
+          setError(`No MPs found for postcode "${searchQuery}". This postcode may not be in our database. Try these examples:\n• BS5 1DL (Bristol area)\n• SW1A 1AA (Westminster)\n• M1 1AA (Manchester)\n• Or search by constituency name instead.`);
         } else {
-          setError('No MPs found for your search. Try searching by:\n• Full postcode (e.g., BS5 1DL, SW1A 1AA)\n• Constituency name (e.g., Bristol East, Westminster)\n• MP name (e.g., Diane Abbott)\n• Political party (e.g., Labour, Conservative)');
+          setError('No MPs found for your search. Try searching by:\n• Full postcode (e.g., BS5 1DL, SW1A 1AA)\n• Constituency name (e.g., Bristol North East, Westminster)\n• MP name (e.g., Diane Abbott)\n• Political party (e.g., Labour, Conservative)');
         }
       }
     } catch (err) {
@@ -612,7 +646,7 @@ export function MPSearch() {
             <div>
               <h4 className="font-medium text-blue-800 mb-2">Postcodes:</h4>
               <ul className="space-y-1 text-blue-700">
-                <li>• BS5 1DL (Bristol East)</li>
+                <li>• BS5 1DL (Bristol area)</li>
                 <li>• SW1A 1AA (Westminster)</li>
                 <li>• M1 1AA (Manchester)</li>
                 <li>• E1 6AN (Bethnal Green)</li>
@@ -623,7 +657,7 @@ export function MPSearch() {
               <ul className="space-y-1 text-blue-700">
                 <li>• MP names: "Diane Abbott", "Keir Starmer"</li>
                 <li>• Parties: "Labour", "Conservative"</li>
-                <li>• Constituencies: "Bristol East", "Westminster"</li>
+                <li>• Constituencies: "Bristol North East", "Westminster"</li>
               </ul>
             </div>
           </div>

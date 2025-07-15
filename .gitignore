@@ -100,3 +100,6 @@ __pycache__/
 *.backup
 *.bak
 *.orig
+
+# Data backup directory
+data-backup/

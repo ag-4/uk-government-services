@@ -88,6 +88,10 @@ real_mps_*.json
 sample-mps.json
 package-updated.json
 
+# Large postcode data files (too big for GitHub)
+uk-postcodes-complete.json
+uk-postcodes-stats.json
+
 # CSV files
 *.csv
 

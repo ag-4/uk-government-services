@@ -1,0 +1,59 @@
+{
+  "timestamp": "2025-07-15T11:32:06.723Z",
+  "totalMPs": 260,
+  "totalPostcodes": 5400,
+  "issuesFound": {
+    "mismatchedPostcodes": 244,
+    "missingImages": 258,
+    "invalidParties": 0,
+    "missingContactInfo": 0,
+    "duplicateConstituencies": 0
+  },
+  "issuesFixed": {
+    "fixedPostcodes": 54500,
+    "fixedParties": 0,
+    "fixedImages": 0
+  },
+  "dataIntegrity": {
+    "allMPsHaveNames": true,
+    "allMPsHaveParties": true,
+    "allMPsHaveImages": true,
+    "postcodeConsistency": false
+  },
+  "sampleIssues": {
+    "mismatchedPostcodes": [
+      {
+        "postcode": "BR1 000",
+        "mpData": "Dame Margaret Hodge",
+        "postcodeData": "Alun Cairns",
+        "constituency": "Barking"
+      },
+      {
+        "postcode": "HP1 000",
+        "mpData": "Marsha De Cordova",
+        "postcodeData": "Alex Davies-Jones",
+        "constituency": "Battersea"
+      },
+      {
+        "postcode": "OX1 000",
+        "mpData": "Neil Coyle",
+        "postcodeData": "Francie Molloy",
+        "constituency": "Bermondsey and Old Southwark"
+      },
+      {
+        "postcode": "BR1 000",
+        "mpData": "Rushanara Ali",
+        "postcodeData": "Alun Cairns",
+        "constituency": "Bethnal Green and Stepney"
+      },
+      {
+        "postcode": "AL1 000",
+        "mpData": "David Evennett",
+        "postcodeData": "Paul Girvan",
+        "constituency": "Bexleyheath and Crayford"
+      }
+    ],
+    "invalidParties": [],
+    "missingContactInfo": []
+  }
+}

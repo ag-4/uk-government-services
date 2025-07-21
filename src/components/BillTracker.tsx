@@ -28,55 +28,13 @@ const BillTracker: React.FC = () => {
 
   const generateAIEnhancedBills = async (): Promise<Bill[]> => {
     try {
-      // Check if puter is available for AI enhancement
-      if (typeof window !== 'undefined' && (window as any).puter) {
-        const prompt = `Generate 8 realistic UK Parliamentary bills currently being considered. Include a mix of government and private member bills across different policy areas (healthcare, education, digital services, environment, economy, justice). For each bill, provide:
-
-1. A realistic title
-2. A comprehensive summary (2-3 sentences)
-3. Current stage (First Reading, Second Reading, Committee Stage, Report Stage, Third Reading, or Royal Assent)
-4. Sponsor (government department or MP name)
-5. Bill type (Government Bill, Private Members' Bill, etc.)
-6. Current house (House of Commons or House of Lords)
-
-Format as JSON array with fields: title, summary, stage, sponsor, type, currentHouse, status. Make them current and relevant to UK parliamentary procedures.`;
-        
-        const aiResponse = await (window as any).puter.ai.chat(prompt, { model: "gpt-4o-mini" });
-        
-        try {
-          // Try to parse AI response as JSON
-          const aiBills = JSON.parse(aiResponse);
-          return aiBills.map((bill: any, index: number) => ({
-            id: `ai-bill-${Date.now()}-${index}`,
-            billId: `AI${index + 1}`,
-            title: bill.title,
-            longTitle: bill.title,
-            summary: bill.summary,
-            description: bill.summary,
-            status: bill.status || bill.stage,
-            stage: bill.stage,
-            currentHouse: bill.currentHouse || 'House of Commons',
-            house: bill.currentHouse || 'House of Commons',
-            introducedDate: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
-            lastUpdated: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            lastUpdate: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            sponsor: bill.sponsor,
-            promoter: bill.sponsor,
-            type: bill.type || 'Government Bill',
-            category: 'Parliamentary Bill',
-            url: `https://bills.parliament.uk/bills/ai-${index + 1}`,
-            parliamentUrl: `https://bills.parliament.uk/bills/ai-${index + 1}`,
-            sessions: []
-          }));
-        } catch (parseError) {
-          console.warn('Could not parse AI response as JSON, using fallback');
-        }
-      }
+      // Generate fallback bills directly
+      console.log('Generating fallback bill data');
     } catch (error) {
-      console.error('Error generating AI bills:', error);
+      console.error('Error generating bills:', error);
     }
     
-    // Return empty array if AI fails, will fall back to other sources
+    // Return empty array, will fall back to other sources
     return [];
   };
 

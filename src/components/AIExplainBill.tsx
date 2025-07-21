@@ -87,11 +87,17 @@ const AIExplainBill: React.FC = () => {
   ];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only scroll if there are messages and the component is visible
+    if (messages.length > 0 && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Only auto-scroll if there are actual messages (not on initial load)
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
   }, [messages]);
 
   const generateAIResponse = async (request: ExplanationRequest): Promise<string> => {
@@ -130,12 +136,7 @@ Please format your response with clear headings and bullet points for easy readi
         }
       }
       
-      // Fallback to puter.ai if available
-      if (typeof window !== 'undefined' && (window as any).puter) {
-        const response = await (window as any).puter.ai.chat(prompt, { model: "gpt-4o-mini" });
-        return response;
-      }
-      
+      // No external AI service available, use enhanced fallback
       throw new Error('No AI service available');
       
     } catch (error) {

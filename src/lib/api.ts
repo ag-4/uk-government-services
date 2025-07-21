@@ -12,51 +12,57 @@ const isStaticDeployment = () => {
 };
 
 // Types
-export interface MP {
+export interface CouncilMember {
   id: string;
-  parliamentId: number;
   name: string;
   displayName: string;
   fullTitle: string;
-  constituency: string;
-  constituencyId: number;
+  council: string;
+  councilId: number;
+  ward: string;
+  wardId: number;
   party: string;
   partyAbbreviation: string;
   partyColor: string;
   gender: string;
-  membershipStartDate: string;
-  membershipEndDate: string | null;
+  termStartDate: string;
+  termEndDate?: string;
   isActive: boolean;
   email: string;
   phone: string;
   website: string;
-  addresses: Array<{
-    type: string;
-    fullAddress: string;
-    postcode?: string;
-    line1?: string;
-    line2?: string;
-    town?: string;
-    county?: string;
-    country?: string;
-  }>;
+  addresses: {
+    council?: string;
+    ward?: string;
+  };
   biography: string;
   thumbnailUrl: string;
-  postcodes: string[];
-  constituencyPostcodes: string[];
-  committees: string[];
-  experience: any[];
-  socialMedia: {
+  postcodes?: string[];
+  wardPostcodes?: string[];
+  committees?: string[];
+  experience?: string[];
+  socialMedia?: {
     twitter?: string;
     facebook?: string;
     instagram?: string;
-    website?: string;
+    linkedin?: string;
   };
-  // Legacy fields for compatibility
-  postcode?: string;
-  fullPostcodes?: string[];
-  address?: string;
-  image?: string;
+}
+
+export interface LocalCouncil {
+  id: string;
+  name: string;
+  type: string; // County, District, Borough, City, etc.
+  website: string;
+  email: string;
+  phone: string;
+  address: string;
+  postcode: string;
+  region: string;
+  population: number;
+  councilMembers: number;
+  services: string[];
+  meetingSchedule: string;
 }
 
 export interface NewsArticle {
@@ -150,57 +156,90 @@ class ApiService {
     }
   }
 
-  // MP API Methods
-  async getAllMPs(): Promise<MP[]> {
+  // Council Member API Methods
+  async getAllCouncilMembers(): Promise<CouncilMember[]> {
     if (isStaticDeployment()) {
-      return staticApiService.getAllMPs();
+      return staticApiService.getAllCouncilMembers();
     }
-    return this.fetchWithErrorHandling<MP[]>('/mps');
+    return this.fetchWithErrorHandling<CouncilMember[]>('/council-members');
   }
 
-  async getMPById(id: string): Promise<MP> {
+  async getCouncilMemberById(id: string): Promise<CouncilMember> {
     if (isStaticDeployment()) {
-      return staticApiService.getMPById(id);
+      return staticApiService.getCouncilMemberById(id);
     }
-    return this.fetchWithErrorHandling<MP>(`/mps/${id}`);
+    return this.fetchWithErrorHandling<CouncilMember>(`/council-members/${id}`);
   }
 
-  async searchMPs(params: {
+  async searchCouncilMembers(params: {
     search?: string;
     postcode?: string;
-    constituency?: string;
+    council?: string;
+    ward?: string;
     party?: string;
-  }): Promise<MP[]> {
+  }): Promise<CouncilMember[]> {
     if (isStaticDeployment()) {
-      return staticApiService.searchMPs(params);
+      return staticApiService.searchCouncilMembers(params);
     }
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value) searchParams.append(key, value);
     });
 
-    return this.fetchWithErrorHandling<MP[]>(`/mps?${searchParams.toString()}`);
+    return this.fetchWithErrorHandling<CouncilMember[]>(`/council-members?${searchParams.toString()}`);
   }
 
-  async getMPByPostcode(postcode: string): Promise<MP[]> {
+  async getCouncilMemberByPostcode(postcode: string): Promise<CouncilMember[]> {
     if (isStaticDeployment()) {
-      return staticApiService.getMPByPostcode(postcode);
+      return staticApiService.getCouncilMemberByPostcode(postcode);
     }
-    return this.fetchWithErrorHandling<MP[]>(`/mps?postcode=${encodeURIComponent(postcode)}`);
+    return this.fetchWithErrorHandling<CouncilMember[]>(`/council-members?postcode=${encodeURIComponent(postcode)}`);
   }
 
-  async validatePostcode(postcode: string): Promise<{valid: boolean; constituency?: string}> {
+  // Local Council API Methods
+  async getAllLocalCouncils(): Promise<LocalCouncil[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.getAllLocalCouncils();
+    }
+    return this.fetchWithErrorHandling<LocalCouncil[]>('/local-councils');
+  }
+
+  async getLocalCouncilById(id: string): Promise<LocalCouncil> {
+    if (isStaticDeployment()) {
+      return staticApiService.getLocalCouncilById(id);
+    }
+    return this.fetchWithErrorHandling<LocalCouncil>(`/local-councils/${id}`);
+  }
+
+  async searchLocalCouncils(params: {
+    search?: string;
+    postcode?: string;
+    type?: string;
+    region?: string;
+  }): Promise<LocalCouncil[]> {
+    if (isStaticDeployment()) {
+      return staticApiService.searchLocalCouncils(params);
+    }
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) searchParams.append(key, value);
+    });
+
+    return this.fetchWithErrorHandling<LocalCouncil[]>(`/local-councils?${searchParams.toString()}`);
+  }
+
+  async validatePostcode(postcode: string): Promise<{valid: boolean; council?: string; ward?: string}> {
     if (isStaticDeployment()) {
       return staticApiService.validatePostcode(postcode);
     }
-    return this.fetchWithErrorHandling<{valid: boolean; constituency?: string}>(`/mps/validate-postcode/${encodeURIComponent(postcode)}`);
+    return this.fetchWithErrorHandling<{valid: boolean; council?: string; ward?: string}>(`/council-members/validate-postcode/${encodeURIComponent(postcode)}`);
   }
 
   async autocompletePostcode(partial: string): Promise<string[]> {
     if (isStaticDeployment()) {
       return staticApiService.autocompletePostcode(partial);
     }
-    return this.fetchWithErrorHandling<string[]>(`/mps/autocomplete-postcode/${encodeURIComponent(partial)}`);
+    return this.fetchWithErrorHandling<string[]>(`/council-members/autocomplete-postcode/${encodeURIComponent(partial)}`);
   }
 
   // News API Methods
@@ -307,46 +346,110 @@ export const apiService = new ApiService();
 
 // Fallback functions for when API is not available
 export const fallbackData = {
-  mps: async (): Promise<MP[]> => {
-    // Return basic fallback MP data
+  councilMembers: async (): Promise<CouncilMember[]> => {
+    // Return basic fallback council member data
     return [
       {
-        id: 'fallback_1',
-        parliamentId: 1001,
-        name: 'John Smith',
-        displayName: 'John Smith',
-        fullTitle: 'John Smith MP',
-        constituency: 'Westminster North',
-        constituencyId: 1001,
+        id: 'fallback_cm_1',
+        name: 'Sarah Johnson',
+        displayName: 'Cllr Sarah Johnson',
+        fullTitle: 'Councillor Sarah Johnson',
+        council: 'Westminster City Council',
+        councilId: 1001,
+        ward: 'Marylebone High Street',
+        wardId: 2001,
         party: 'Conservative',
         partyAbbreviation: 'Con',
         partyColor: '#0087dc',
-        gender: 'M',
-        membershipStartDate: '2019-12-12',
-        membershipEndDate: null,
+        gender: 'F',
+        termStartDate: '2022-05-05',
+        termEndDate: '2026-05-05',
         isActive: true,
-        email: 'john.smith.mp@parliament.uk',
-        phone: '020 7219 3000',
-        website: 'https://www.johnsmithmp.co.uk',
-        thumbnailUrl: '/images/mp-placeholder.jpg',
-        postcodes: ['W1A 0AA'],
-        constituencyPostcodes: ['W1A 0AA', 'W1A 1AA'],
-        biography: 'John Smith has been the Conservative MP for Westminster North since 2019.',
-        addresses: [{
-          type: 'Parliamentary',
-          fullAddress: 'House of Commons, Westminster, London SW1A 0AA',
-          postcode: 'SW1A 0AA',
-          line1: 'House of Commons',
-          line2: 'Westminster',
-          town: 'London',
-          county: 'Greater London',
-          country: 'UK'
-        }],
-        committees: ['Treasury Select Committee'],
-        experience: [],
+        email: 'sarah.johnson@westminster.gov.uk',
+        phone: '020 7641 6000',
+        website: 'https://www.westminster.gov.uk/councillors/sarah-johnson',
+        thumbnailUrl: '/images/councillor-placeholder.jpg',
+        postcodes: ['W1U 2QD', 'W1U 3QA'],
+        wardPostcodes: ['W1U 2QD', 'W1U 3QA', 'W1G 0PW'],
+        biography: 'Sarah Johnson has been a Conservative councillor for Marylebone High Street ward since 2022.',
+        addresses: {
+          council: 'Westminster City Hall, 64 Victoria Street, London SW1E 6QP',
+          ward: 'Marylebone High Street Ward Office'
+        },
+        committees: ['Planning Committee', 'Licensing Committee'],
+        experience: ['Local Business Owner', 'Community Volunteer'],
         socialMedia: {
-          twitter: '@johnsmithmp'
+          twitter: '@cllrsarahjohnson',
+          facebook: 'CllrSarahJohnson'
         }
+      },
+      {
+        id: 'fallback_cm_2',
+        name: 'David Williams',
+        displayName: 'Cllr David Williams',
+        fullTitle: 'Councillor David Williams',
+        council: 'Camden Council',
+        councilId: 1002,
+        ward: 'Bloomsbury',
+        wardId: 2002,
+        party: 'Labour',
+        partyAbbreviation: 'Lab',
+        partyColor: '#e4003b',
+        gender: 'M',
+        termStartDate: '2022-05-05',
+        termEndDate: '2026-05-05',
+        isActive: true,
+        email: 'david.williams@camden.gov.uk',
+        phone: '020 7974 4444',
+        website: 'https://www.camden.gov.uk/councillors/david-williams',
+        thumbnailUrl: '/images/councillor-placeholder.jpg',
+        postcodes: ['WC1N 1NY', 'WC1N 2PL'],
+        wardPostcodes: ['WC1N 1NY', 'WC1N 2PL', 'WC1E 6BT'],
+        biography: 'David Williams has been a Labour councillor for Bloomsbury ward since 2022.',
+        addresses: {
+          council: 'Camden Town Hall, Judd Street, London WC1H 9JE',
+          ward: 'Bloomsbury Ward Office'
+        },
+        committees: ['Housing Committee', 'Environment Committee'],
+        experience: ['Housing Advocate', 'Environmental Campaigner'],
+        socialMedia: {
+          twitter: '@cllrdavidwilliams'
+        }
+      }
+    ];
+  },
+
+  localCouncils: async (): Promise<LocalCouncil[]> => {
+    return [
+      {
+        id: 'fallback_lc_1',
+        name: 'Westminster City Council',
+        type: 'London Borough',
+        website: 'https://www.westminster.gov.uk',
+        email: 'info@westminster.gov.uk',
+        phone: '020 7641 6000',
+        address: 'Westminster City Hall, 64 Victoria Street, London',
+        postcode: 'SW1E 6QP',
+        region: 'London',
+        population: 261000,
+        councilMembers: 54,
+        services: ['Housing', 'Planning', 'Licensing', 'Environmental Health', 'Council Tax'],
+        meetingSchedule: 'Full Council meets monthly, committees meet fortnightly'
+      },
+      {
+        id: 'fallback_lc_2',
+        name: 'Camden Council',
+        type: 'London Borough',
+        website: 'https://www.camden.gov.uk',
+        email: 'contact@camden.gov.uk',
+        phone: '020 7974 4444',
+        address: 'Camden Town Hall, Judd Street, London',
+        postcode: 'WC1H 9JE',
+        region: 'London',
+        population: 270000,
+        councilMembers: 54,
+        services: ['Housing', 'Education', 'Social Services', 'Planning', 'Waste Management'],
+        meetingSchedule: 'Full Council meets monthly, committees meet weekly'
       }
     ];
   },

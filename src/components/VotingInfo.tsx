@@ -457,7 +457,7 @@ export default function VotingInfo() {
                       This data comes from TheyWorkForYou, which tracks all parliamentary proceedings.
                     </p>
                     <p>
-                      You can see how your MP voted on specific issues by searching for them in the MP Search section.
+                      You can see how your representatives voted on specific issues by searching for them in the Council Search section.
                     </p>
                   </div>
                 </div>

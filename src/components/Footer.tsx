@@ -6,18 +6,18 @@ export function Footer() {
 
   const footerLinks = {
     'About': [
-      { name: 'About Us', url: '/about-us.html', icon: Info },
-      { name: 'How It Works', url: '#how-it-works' },
-      { name: 'Data Sources', url: '#data-sources' },
-      { name: 'Contact Support', url: '#contact' }
+      { name: 'About Us', url: '/about', icon: Info },
+      { name: 'How It Works', url: '/about' },
+      { name: 'Data Sources', url: '/about' },
+      { name: 'Contact Support', url: '/contact' }
     ],
     'Services': [
-      { name: 'Find Your MP', url: '#mp-search' },
-      { name: 'Contact Templates', url: '#templates' },
-      { name: 'Newsletter Subscription', url: '#newsletter' },
-      { name: 'Manage Subscriptions', url: '/subscription-management.html' },
-      { name: 'Voting Information', url: '#voting' },
-      { name: 'Citizen Rights', url: '#rights' }
+      { name: 'Find Your Council', url: '/council-lookup' },
+      { name: 'Contact Templates', url: '/templates' },
+      { name: 'Newsletter Subscription', url: '/newsletter' },
+      { name: 'Manage Subscriptions', url: '/newsletter' },
+      { name: 'Voting Information', url: '/voting' },
+      { name: 'Citizen Rights', url: '/rights' }
     ],
     'Government Links': [
       { name: 'UK Parliament', url: 'https://parliament.uk' },
@@ -26,10 +26,10 @@ export function Footer() {
       { name: 'HMRC', url: 'https://hmrc.gov.uk' }
     ],
     'Legal & Privacy': [
-      { name: 'Privacy Policy', url: '/privacy-policy.html', icon: Lock },
-      { name: 'Cookie Policy', url: '/cookie-policy.html', icon: Cookie },
-      { name: 'Accessibility', url: '#accessibility' },
-      { name: 'Terms of Service', url: '#terms' }
+      { name: 'Privacy Policy', url: '/privacy', icon: Lock },
+      { name: 'Cookie Policy', url: '/privacy', icon: Cookie },
+      { name: 'Accessibility', url: '/accessibility' },
+      { name: 'Terms of Service', url: '/terms' }
     ]
   };
 
@@ -124,21 +124,21 @@ export function Footer() {
         <div className="mt-8 pt-6 border-t">
           <div className="flex flex-wrap justify-center gap-6 mb-6">
             <a
-              href="/privacy-policy.html"
+              href="/privacy"
               className="inline-flex items-center px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors duration-200 font-medium"
             >
               <Lock className="h-4 w-4 mr-2" />
               Privacy Policy
             </a>
             <a
-              href="/cookie-policy.html"
+              href="/terms"
               className="inline-flex items-center px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors duration-200 font-medium"
             >
               <Cookie className="h-4 w-4 mr-2" />
-              Cookie Policy
+              Terms & Cookies
             </a>
             <a
-              href="/about-us.html"
+              href="/about"
               className="inline-flex items-center px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors duration-200 font-medium"
             >
               <Info className="h-4 w-4 mr-2" />

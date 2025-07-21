@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Crown, Users, FileText, MessageSquare, Vote, Phone, AlertCircle, Mail, Building2, MapPin, Bot } from 'lucide-react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import Hero from './components/Hero';
-import NewsSection from './components/NewsSection';
-import { MPSearch } from './components/MPSearch';
-import MessageTemplates from './components/MessageTemplates';
-import { NewsletterSubscription } from './components/NewsletterSubscription';
 import { Footer } from './components/Footer';
-import CitizenRights from './components/CitizenRights';
-import VotingInfo from './components/VotingInfo';
-import CallToAction from './components/CallToAction';
-import LocalCouncilLookup from './components/LocalCouncilLookup';
-import BillTracker from './components/BillTracker';
-import ConstituencyMapView from './components/ConstituencyMapView';
-import AIExplainBill from './components/AIExplainBill';
 import ErrorBoundaryNew from './components/EnhancedErrorBoundary';
+
+// Page Components
+import HomePage from './pages/HomePage';
+import ParliamentPage from './pages/ParliamentPage';
+import PetitionsPage from './pages/PetitionsPage';
+import ServicesPage from './pages/ServicesPage';
+import AIAssistantPage from './pages/AIAssistantPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import SecurityPage from './pages/SecurityPage';
+import LocalServicesPage from './pages/LocalServicesPage';
+import NewsPage from './pages/NewsPage';
+import CouncilLookupPage from './pages/CouncilLookupPage';
+import MPSearchPage from './pages/MPSearchPage';
+import BillTrackerPage from './pages/BillTrackerPage';
+import AIExplainPage from './pages/AIExplainPage';
+import TemplatesPage from './pages/TemplatesPage';
+import NewsletterPage from './pages/NewsletterPage';
+import RightsPage from './pages/RightsPage';
+import VotingPage from './pages/VotingPage';
+import ContactPage from './pages/ContactPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import AccessibilityPage from './pages/AccessibilityPage';
+import AboutPage from './pages/AboutPage';
+
 import './App.css';
 
 function App() {
@@ -24,170 +36,36 @@ function App() {
       <Router>
         <div className="min-h-screen bg-background">
           <Header />
-          <Routes>
-            <Route path="/" element={<AppContent />} />
-          </Routes>
+          <main className="pt-16 min-h-screen">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/parliament" element={<ParliamentPage />} />
+              <Route path="/petitions" element={<PetitionsPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/ai-assistant" element={<AIAssistantPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/security" element={<SecurityPage />} />
+              <Route path="/local-services" element={<LocalServicesPage />} />
+              <Route path="/news" element={<NewsPage />} />
+              <Route path="/council-lookup" element={<CouncilLookupPage />} />
+              <Route path="/mp-search" element={<MPSearchPage />} />
+              <Route path="/bill-tracker" element={<BillTrackerPage />} />
+              <Route path="/ai-explain" element={<AIExplainPage />} />
+              <Route path="/templates" element={<TemplatesPage />} />
+              <Route path="/newsletter" element={<NewsletterPage />} />
+              <Route path="/rights" element={<RightsPage />} />
+              <Route path="/voting" element={<VotingPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/accessibility" element={<AccessibilityPage />} />
+              <Route path="/about" element={<AboutPage />} />
+            </Routes>
+          </main>
           <Footer />
         </div>
       </Router>
     </ErrorBoundaryNew>
-  );
-}
-
-function AppContent() {
-  const location = useLocation();
-  const [activeSection, setActiveSection] = useState('home');
-
-  const scrollToSection = (sectionId: string) => {
-    setActiveSection(sectionId);
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  return (
-    <main className="pt-16">
-      {/* Navigation Pills */}
-      <div className="sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-1 py-3 overflow-x-auto">
-            <NavPill onClick={() => scrollToSection('home')} active={activeSection === 'home'} icon={Crown}>
-              Home
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('news')} active={activeSection === 'news'} icon={FileText}>
-              News & Updates
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('mp-search')} active={activeSection === 'mp-search'} icon={Users}>
-              Find Your MP
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('council-lookup')} active={activeSection === 'council-lookup'} icon={Building2}>
-              Local Council
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('bill-tracker')} active={activeSection === 'bill-tracker'} icon={FileText}>
-              Bill Tracker
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('constituency-map')} active={activeSection === 'constituency-map'} icon={MapPin}>
-              Constituency Map
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('ai-explain')} active={activeSection === 'ai-explain'} icon={Bot}>
-              AI Bill Explainer
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('templates')} active={activeSection === 'templates'} icon={MessageSquare}>
-              Contact Templates
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('newsletter')} active={activeSection === 'newsletter'} icon={Mail}>
-              Newsletter
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('rights')} active={activeSection === 'rights'} icon={AlertCircle}>
-              Your Rights
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('voting')} active={activeSection === 'voting'} icon={Vote}>
-              Voting Guide
-            </NavPill>
-            <NavPill onClick={() => scrollToSection('action')} active={activeSection === 'action'} icon={Phone}>
-              Get Involved
-            </NavPill>
-          </nav>
-        </div>
-      </div>
-
-      {/* Page Sections */}
-      <div id="home">
-        <Hero />
-      </div>
-      
-      <div id="news" className="scroll-mt-32">
-        <NewsSection />
-      </div>
-      
-      <div id="mp-search" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <MPSearch />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="council-lookup" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <LocalCouncilLookup />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="bill-tracker" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <BillTracker />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="constituency-map" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <ConstituencyMapView />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="ai-explain" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <AIExplainBill />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="templates" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <MessageTemplates />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="newsletter" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <section className="py-16 bg-gray-50">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-              <NewsletterSubscription />
-            </div>
-          </section>
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="rights" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <CitizenRights />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="voting" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <VotingInfo />
-        </ErrorBoundaryNew>
-      </div>
-      
-      <div id="action" className="scroll-mt-32">
-        <ErrorBoundaryNew>
-          <CallToAction />
-        </ErrorBoundaryNew>
-      </div>
-    </main>
-  );
-}
-
-interface NavPillProps {
-  children: React.ReactNode;
-  onClick: () => void;
-  active: boolean;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-function NavPill({ children, onClick, active, icon: Icon }: NavPillProps) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-        active
-          ? 'bg-primary text-primary-foreground shadow-md'
-          : 'text-gray-600 hover:text-primary hover:bg-gray-100'
-      }`}
-    >
-      <Icon className="w-4 h-4" />
-      <span>{children}</span>
-    </button>
   );
 }
 

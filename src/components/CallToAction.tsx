@@ -86,10 +86,10 @@ export default function CallToAction() {
   const quickActions = [
     {
       icon: Phone,
-      title: 'Contact Your MP',
-      description: 'Have a direct conversation about local issues',
+      title: 'Contact Your Council',
+      description: 'Find and contact your local council members',
       action: 'Call Now',
-      onClick: () => scrollToSection('mp-search')
+      onClick: () => scrollToSection('council-search')
     },
     {
       icon: Mail,
@@ -199,7 +199,7 @@ export default function CallToAction() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="uk-gov-accent inline-flex items-center space-x-2 text-lg">
-                <span>Find Your MP</span>
+                <span>Find Your Council</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button className="bg-white/10 hover:bg-white/20 border border-white/30 hover:border-white/50 text-white transition-colors inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-md font-medium text-lg">

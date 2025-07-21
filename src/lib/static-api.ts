@@ -1,7 +1,7 @@
 // Static API Service for Production Deployment
 // This service loads data from static JSON files instead of backend API calls
 
-import { MP, NewsArticle, Bill, Vote } from './api';
+import { CouncilMember, LocalCouncil, NewsArticle, Bill, Vote } from './api';
 
 class StaticApiService {
   private cache: Map<string, any> = new Map();
@@ -26,107 +26,166 @@ class StaticApiService {
     }
   }
 
-  // MP API Methods
-  async getAllMPs(): Promise<MP[]> {
-    return this.loadJsonFile<MP[]>('mps.json');
+  // Council Member API Methods
+  async getAllCouncilMembers(): Promise<CouncilMember[]> {
+    return this.loadJsonFile<CouncilMember[]>('council-members.json');
   }
 
-  async getMPById(id: string): Promise<MP> {
-    const mps = await this.getAllMPs();
-    const mp = mps.find(mp => mp.id === id || mp.parliamentId.toString() === id);
-    if (!mp) {
-      throw new Error(`MP with id ${id} not found`);
+  async getCouncilMemberById(id: string): Promise<CouncilMember> {
+    const councilMembers = await this.getAllCouncilMembers();
+    const member = councilMembers.find(cm => cm.id === id);
+    if (!member) {
+      throw new Error(`Council member with id ${id} not found`);
     }
-    return mp;
+    return member;
   }
 
-  async searchMPs(params: {
+  async searchCouncilMembers(params: {
     search?: string;
     postcode?: string;
-    constituency?: string;
+    council?: string;
+    ward?: string;
     party?: string;
-  }): Promise<MP[]> {
-    const mps = await this.getAllMPs();
-    let filteredMPs = mps;
+  }): Promise<CouncilMember[]> {
+    const councilMembers = await this.getAllCouncilMembers();
+    let filteredMembers = councilMembers;
 
     if (params.search) {
       const searchTerm = params.search.toLowerCase();
-      filteredMPs = filteredMPs.filter(mp => 
-        mp.name.toLowerCase().includes(searchTerm) ||
-        mp.constituency.toLowerCase().includes(searchTerm) ||
-        mp.party.toLowerCase().includes(searchTerm)
+      filteredMembers = filteredMembers.filter(cm => 
+        cm.name.toLowerCase().includes(searchTerm) ||
+        cm.council.toLowerCase().includes(searchTerm) ||
+        cm.ward.toLowerCase().includes(searchTerm) ||
+        cm.party.toLowerCase().includes(searchTerm)
       );
     }
 
     if (params.postcode) {
       const postcode = params.postcode.toUpperCase().replace(/\s/g, '');
-      filteredMPs = filteredMPs.filter(mp => 
-        mp.postcodes?.some(pc => pc.toUpperCase().replace(/\s/g, '').includes(postcode)) ||
-        mp.constituencyPostcodes?.some(pc => pc.toUpperCase().replace(/\s/g, '').includes(postcode))
+      filteredMembers = filteredMembers.filter(cm => 
+        cm.postcodes?.some(pc => pc.toUpperCase().replace(/\s/g, '').includes(postcode)) ||
+        cm.wardPostcodes?.some(pc => pc.toUpperCase().replace(/\s/g, '').includes(postcode))
       );
     }
 
-    if (params.constituency) {
-      const constituency = params.constituency.toLowerCase();
-      filteredMPs = filteredMPs.filter(mp => 
-        mp.constituency.toLowerCase().includes(constituency)
+    if (params.council) {
+      const council = params.council.toLowerCase();
+      filteredMembers = filteredMembers.filter(cm => 
+        cm.council.toLowerCase().includes(council)
+      );
+    }
+
+    if (params.ward) {
+      const ward = params.ward.toLowerCase();
+      filteredMembers = filteredMembers.filter(cm => 
+        cm.ward.toLowerCase().includes(ward)
       );
     }
 
     if (params.party) {
       const party = params.party.toLowerCase();
-      filteredMPs = filteredMPs.filter(mp => 
-        mp.party.toLowerCase().includes(party) ||
-        mp.partyAbbreviation.toLowerCase().includes(party)
+      filteredMembers = filteredMembers.filter(cm => 
+        cm.party.toLowerCase().includes(party) ||
+        cm.partyAbbreviation.toLowerCase().includes(party)
       );
     }
 
-    return filteredMPs;
+    return filteredMembers;
   }
 
-  async getMPByPostcode(postcode: string): Promise<MP[]> {
-    return this.searchMPs({ postcode });
+  async getCouncilMemberByPostcode(postcode: string): Promise<CouncilMember[]> {
+    return this.searchCouncilMembers({ postcode });
   }
 
-  async validatePostcode(postcode: string): Promise<{valid: boolean; constituency?: string}> {
+  // Local Council API Methods
+  async getAllLocalCouncils(): Promise<LocalCouncil[]> {
+    return this.loadJsonFile<LocalCouncil[]>('local-councils.json');
+  }
+
+  async getLocalCouncilById(id: string): Promise<LocalCouncil> {
+    const councils = await this.getAllLocalCouncils();
+    const council = councils.find(c => c.id === id);
+    if (!council) {
+      throw new Error(`Local council with id ${id} not found`);
+    }
+    return council;
+  }
+
+  async searchLocalCouncils(params: {
+    search?: string;
+    postcode?: string;
+    type?: string;
+    region?: string;
+  }): Promise<LocalCouncil[]> {
+    const councils = await this.getAllLocalCouncils();
+    let filteredCouncils = councils;
+
+    if (params.search) {
+      const searchTerm = params.search.toLowerCase();
+      filteredCouncils = filteredCouncils.filter(c => 
+        c.name.toLowerCase().includes(searchTerm) ||
+        c.type.toLowerCase().includes(searchTerm) ||
+        c.region.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (params.postcode) {
+      const postcode = params.postcode.toUpperCase().replace(/\s/g, '');
+      filteredCouncils = filteredCouncils.filter(c => 
+        c.postcode.toUpperCase().replace(/\s/g, '').includes(postcode)
+      );
+    }
+
+    if (params.type) {
+      const type = params.type.toLowerCase();
+      filteredCouncils = filteredCouncils.filter(c => 
+        c.type.toLowerCase().includes(type)
+      );
+    }
+
+    if (params.region) {
+      const region = params.region.toLowerCase();
+      filteredCouncils = filteredCouncils.filter(c => 
+        c.region.toLowerCase().includes(region)
+      );
+    }
+
+    return filteredCouncils;
+  }
+
+  async validatePostcode(postcode: string): Promise<boolean> {
+    const normalizedPostcode = postcode.toUpperCase().replace(/\s/g, '');
+    const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}$/;
+    
+    if (!postcodeRegex.test(normalizedPostcode)) {
+      return false;
+    }
+
     try {
-      const postcodeMapping = await this.loadJsonFile<Record<string, string>>('postcode-to-constituency.json');
-      const normalizedPostcode = postcode.toUpperCase().replace(/\s/g, '');
-      
-      // Check if exact postcode exists
-      if (postcodeMapping[normalizedPostcode]) {
-        return {
-          valid: true,
-          constituency: postcodeMapping[normalizedPostcode]
-        };
-      }
-
-      // Check partial matches (first part of postcode)
-      const postcodePrefix = normalizedPostcode.substring(0, Math.min(4, normalizedPostcode.length));
-      const matchingConstituency = Object.entries(postcodeMapping)
-        .find(([pc]) => pc.startsWith(postcodePrefix))?.[1];
-
-      if (matchingConstituency) {
-        return {
-          valid: true,
-          constituency: matchingConstituency
-        };
-      }
-
-      return { valid: false };
+      const councilMembers = await this.getAllCouncilMembers();
+      return councilMembers.some(cm => 
+        cm.postcodes?.some(pc => pc.toUpperCase().replace(/\s/g, '') === normalizedPostcode) ||
+        cm.wardPostcodes?.some(pc => pc.toUpperCase().replace(/\s/g, '') === normalizedPostcode)
+      );
     } catch (error) {
       console.error('Error validating postcode:', error);
-      return { valid: false };
+      return false;
     }
   }
 
   async autocompletePostcode(partial: string): Promise<string[]> {
     try {
-      const postcodeMapping = await this.loadJsonFile<Record<string, string>>('postcode-to-constituency.json');
+      const councilMembers = await this.getAllCouncilMembers();
       const normalizedPartial = partial.toUpperCase().replace(/\s/g, '');
       
-      const matches = Object.keys(postcodeMapping)
-        .filter(postcode => postcode.startsWith(normalizedPartial))
+      const allPostcodes = new Set<string>();
+      councilMembers.forEach(cm => {
+        cm.postcodes?.forEach(pc => allPostcodes.add(pc));
+        cm.wardPostcodes?.forEach(pc => allPostcodes.add(pc));
+      });
+
+      const matches = Array.from(allPostcodes)
+        .filter(postcode => postcode.toUpperCase().replace(/\s/g, '').startsWith(normalizedPartial))
         .slice(0, 10); // Limit to 10 suggestions
 
       return matches;
@@ -306,8 +365,8 @@ class StaticApiService {
     return this.loadJsonFile('citizen-rights.json');
   }
 
-  async getMPStatistics(): Promise<any> {
-    return this.loadJsonFile('mp-statistics.json');
+  async getCouncilStatistics(): Promise<any> {
+    return this.loadJsonFile('council-statistics.json');
   }
 
   async getAppSummary(): Promise<any> {

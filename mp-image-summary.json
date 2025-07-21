@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-07-15T10:45:38.153Z",
+  "totalMPs": 260,
+  "mpsWithActualImages": 5,
+  "mpsWithPlaceholder": 255,
+  "availableImages": [
+    "Bridget Phillipson",
+    "Caroline Lucas",
+    "Ed Davey",
+    "Emily Thornberry",
+    "Hilary Benn",
+    "Jess Phillips",
+    "Lisa Nandy",
+    "Stella Creasy",
+    "Stephen Flynn"
+  ],
+  "imageMapping": {
+    "Bridget Phillipson": "/images/bridget-phillipson.jpg",
+    "Caroline Lucas": "/images/caroline-lucas.jpg",
+    "Ed Davey": "/images/ed-davey.jpg",
+    "Emily Thornberry": "/images/emily-thornberry.jpg",
+    "Hilary Benn": "/images/hilary-benn.jpg",
+    "Jess Phillips": "/images/jess-phillips.jpg",
+    "Lisa Nandy": "/images/lisa-nandy.jpg",
+    "Stella Creasy": "/images/stella-creasy.jpg",
+    "Stephen Flynn": "/images/stephen-flynn.jpg"
+  }
+}

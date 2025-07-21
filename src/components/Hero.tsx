@@ -12,7 +12,7 @@ export default function Hero() {
   };
 
   const scrollToNextSection = () => {
-    const nextSection = document.getElementById('mp-search');
+    const nextSection = document.getElementById('council-search');
     if (nextSection) {
       nextSection.scrollIntoView({ behavior: 'smooth' });
     }
@@ -69,12 +69,12 @@ export default function Hero() {
             {/* Quick Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
-                onClick={() => scrollToSection('mp-search')}
+                onClick={() => scrollToSection('council-search')}
                 className="uk-gov-accent inline-flex items-center justify-center space-x-2 text-lg focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-primary"
-                aria-label="Navigate to MP search section"
+                aria-label="Navigate to council search section"
               >
                 <Users className="w-5 h-5" aria-hidden="true" />
-                <span>Find Your MP</span>
+                <span>Find Your Council</span>
                 <ArrowRight className="w-5 h-5" aria-hidden="true" />
               </button>
               
@@ -91,8 +91,8 @@ export default function Hero() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 pt-8 border-t border-white/20">
               <div className="text-center">
-                <div className="text-3xl font-bold text-accent">650</div>
-                <div className="text-sm text-white/80">MPs in Parliament</div>
+                <div className="text-3xl font-bold text-accent">20K+</div>
+                <div className="text-sm text-white/80">Council Members</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-accent">67M</div>
@@ -110,8 +110,8 @@ export default function Hero() {
             <FeatureCard
               icon={<Users className="w-6 h-6" />}
               title="Find Your Representative"
-              description="Search for your local MP by postcode and get their contact information"
-              onClick={() => scrollToSection('mp-search')}
+              description="Search for your local council members by postcode and get their contact information"
+          onClick={() => scrollToSection('council-search')}
             />
             
             <FeatureCard

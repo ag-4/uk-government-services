@@ -42,41 +42,10 @@ export default function NewsSection() {
 
   const generateAIEnhancedNews = async (): Promise<NewsItem[]> => {
     try {
-      // Check if puter is available for AI enhancement
-      if (typeof window !== 'undefined' && (window as any).puter) {
-        const prompt = `Generate 6 realistic UK government news headlines and summaries for today. Include a mix of categories: Parliament, New Laws, UK Politics, Digital Services, Health Policy, and Education. For each article, provide:
-
-1. A realistic headline
-2. A 2-3 sentence summary
-3. Appropriate category
-4. Realistic source (BBC News, Gov.uk, Parliament.UK, etc.)
-
-Format as JSON array with fields: title, summary, category, source. Make them current and relevant to UK government activities.`;
-        
-        const aiResponse = await (window as any).puter.ai.chat(prompt, { model: "gpt-4o-mini" });
-        
-        try {
-          // Try to parse AI response as JSON
-          const aiNews = JSON.parse(aiResponse);
-          return aiNews.map((article: any, index: number) => ({
-            id: `AI_${Date.now()}_${index}`,
-            title: article.title,
-            summary: article.summary,
-            category: article.category,
-            source: article.source,
-            timestamp: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-            publishedAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-            content: article.summary,
-            url: "#",
-            author: "AI News Generator",
-            tags: ["government", "uk", "news"]
-          }));
-        } catch (parseError) {
-          console.warn('Could not parse AI response as JSON, using fallback');
-        }
-      }
+      // Generate fallback mock articles directly
+      console.log('Generating fallback news articles');
     } catch (error) {
-      console.error('Error generating AI news:', error);
+      console.error('Error generating news:', error);
     }
     
     // Fallback to mock articles

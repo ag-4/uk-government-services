@@ -1,7 +1,14 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M20 0L37.3205 10V30L20 40L2.67949 30V10L20 0Z" fill="#1E40AF"/>
-  <path d="M20 5L32.3205 12V26L20 33L7.67949 26V12L20 5Z" fill="white"/>
-  <path d="M20 10L27.3205 14V22L20 26L12.6795 22V14L20 10Z" fill="#1E40AF"/>
-  <path d="M19 15H21V25H19V15Z" fill="white"/>
-  <path d="M15 19H25V21H15V19Z" fill="white"/>
+<svg width="240" height="60" viewBox="0 0 240 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Red geometric star/cross shape -->
+  <g transform="translate(5, 5)">
+    <!-- Main red cross/star shape -->
+    <path d="M25 0L35 10L50 10L40 20L50 30L40 40L50 40L40 50L25 50L15 40L0 40L10 30L0 20L10 10L0 10L10 0L25 0Z" fill="#FF0000"/>
+    <!-- Inner white star cutout -->
+    <path d="M25 12L30 17L37 17L32 22L34 29L25 25L16 29L18 22L13 17L20 17L25 12Z" fill="white"/>
+  </g>
+  
+  <!-- GOVWHIZ text -->
+  <g transform="translate(70, 15)">
+    <text x="0" y="20" font-family="Arial Black, Arial, sans-serif" font-size="28" font-weight="900" fill="#000000">GOVWHIZ</text>
+  </g>
 </svg>
